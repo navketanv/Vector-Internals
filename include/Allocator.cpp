@@ -1,8 +1,17 @@
 #include "Allocator.h"
+#include <new>
+#include <limits>
 #include <utility>
 
 template<typename T>
 T* Allocator<T>::allocate(std::size_t count) {
+    if (count == 0) {
+        return nullptr;
+    }
+
+    if (count > std::numeric_limits<std::size_t>::max() / sizeof(T)) {
+        throw std::bad_array_new_length();
+    }
     return static_cast<T*>(::operator new(sizeof(T) * count));
 }
 

@@ -1,10 +1,23 @@
-#ifndef BUFFERSTORAGE_H
-#define BUFFERSTORAGE_H
+#pragma once
+#include "Allocator.h"
 
+template<typename T, typename Alloc = Allocator<T>>
 class BufferStorage
 {
 public:
-    BufferStorage();
-};
+    BufferStorage() = default;
+    explicit BufferStorage(std::size_t capacity);
 
-#endif // BUFFERSTORAGE_H
+    BufferStorage(const BufferStorage& rhs) = delete;
+    BufferStorage& operator=(const BufferStorage& rhs) = delete;
+
+    BufferStorage(BufferStorage&& rhs) noexcept;
+    BufferStorage& operator=(BufferStorage&& rhs) noexcept;
+
+    ~BufferStorage();
+
+private:
+    Alloc m_allocator{};
+    T* m_pData{nullptr};
+    std::size_t m_capacity{};
+};
