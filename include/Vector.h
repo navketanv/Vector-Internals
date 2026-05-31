@@ -1,6 +1,7 @@
 #pragma once
 #include "Allocator.h"
 #include "BufferStorage.h"
+#include <initializer_list>
 
 template<typename T, typename Alloc = Allocator<T>>
 class Vector
@@ -9,6 +10,9 @@ public:
     Vector();
     Vector(std::size_t size, const T& value);
     explicit Vector(std::size_t size);
+    Vector(std::initializer_list<T> list);
+    Vector(const Vector& rhs);
+    Vector(Vector&& rhs) noexcept(std::is_nothrow_move_constructible_v<BufferStorage<T, Alloc>>);
     ~Vector() noexcept;
 
     void clear() noexcept;
@@ -19,6 +23,9 @@ public:
     [[nodiscard]] T* data() noexcept;
     [[nodiscard]] const T* data() const noexcept;
 
+    Alloc& allocator() noexcept;
+    const Alloc& allocator() const noexcept;
+
     [[nodiscard]] T& operator[](std::size_t index) noexcept;
     [[nodiscard]] const T& operator[](std::size_t index) const noexcept;
 
@@ -27,6 +34,7 @@ public:
 
     [[nodiscard]] T& front() noexcept;
     [[nodiscard]] const T& front() const noexcept;
+
     [[nodiscard]] T& back() noexcept;
     [[nodiscard]] const T& back() const noexcept;
 
