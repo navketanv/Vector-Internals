@@ -118,7 +118,7 @@ void Vector<T, Alloc>::reserve(std::size_t newCapacity) {
     std::size_t alreadyConstructed{};
     try {
         while (alreadyConstructed < m_size) {
-            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, std::move_if_noexcept(data()[alreadyConstructed]));
+            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, data()[alreadyConstructed]);
             ++alreadyConstructed;
         }
     } catch (...) {
@@ -149,7 +149,7 @@ void Vector<T, Alloc>::push_back(T&& value) {
     if (m_size == capacity()) {
         reserve(nextCapacity(m_size + 1));
     }
-    allocator().construct(data() + m_size, std::forward<T>(value));
+    allocator().construct(data() + m_size, std::move(value));
     ++m_size;
 }
 
@@ -260,10 +260,22 @@ std::size_t Vector<T, Alloc>::maxSize() const noexcept {
 
 template<typename T, typename Alloc>
 std::size_t Vector<T, Alloc>::nextCapacity(std::size_t required) const {
-    if (required > maxSize()) {
+    const std::size_t possibleMaxSize = maxSize();
+    const std::size_t currentCapacity = capacity();
+
+    if (required > possibleMaxSize) {
         throw std::length_error("Vector capacity exceeds maxSize()");
     }
 
-    std::size_t newCapacity = capacity() == 0 ? 1 : capacity() * 2;
+    std::size_t newCapacity = 0;
+    if (currentCapacity == 0) {
+        newCapacity = 1;
+    } else if (currentCapacity > possibleMaxSize / 2) {
+        newCapacity = possibleMaxSize;
+    } else {
+        newCapacity = currentCapacity * 2;
+    }
+
+    newCapacity = std::min(newCapacity, possibleMaxSize);
     return std::max(newCapacity, required);
 }
