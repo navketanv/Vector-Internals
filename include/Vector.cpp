@@ -1,4 +1,5 @@
 #include "Vector.h"
+#include <algorithm>
 #include <stdexcept>
 #include <utility>
 
@@ -65,8 +66,73 @@ Vector<T, Alloc>::Vector(Vector<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_c
     , m_size(std::exchange(rhs.m_size, 0)) {}
 
 template<typename T, typename Alloc>
+Vector<T, Alloc>& Vector<T, Alloc>::operator=(const Vector<T, Alloc>& rhs)
+{
+    if (this != &rhs) {
+        if (rhs.size() <= capacity()) {
+            const std::size_t common = std::min(rhs.size(), m_size);
+            for (std::size_t index = 0; index < common; ++index) {
+                data()[index] = rhs.data()[index];
+            }
+            if (rhs.size() <= m_size) {
+                while (m_size > rhs.size()) {
+                    --m_size;
+                    allocator().destroy(data() + m_size);
+                }
+            } else {
+                while (m_size < rhs.size()) {
+                    allocator().construct(data() + m_size, rhs.data()[m_size]);
+                    ++m_size;
+                }
+            }
+        } else {
+            Vector<T, Alloc> temp(rhs);
+            *this = std::move(temp);
+        }
+    }
+    return *this;
+}
+
+template<typename T, typename Alloc>
+Vector<T, Alloc>& Vector<T, Alloc>::operator=(Vector<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_assignable_v<BufferStorage<T, Alloc>>) {
+    if (this != &rhs) {
+        clear();
+        m_storage = std::move(rhs.m_storage);
+        m_size = std::exchange(rhs.m_size, 0);
+    }
+    return *this;
+}
+
+template<typename T, typename Alloc>
 Vector<T, Alloc>::~Vector() noexcept {
     clear();
+}
+
+template<typename T, typename Alloc>
+void Vector<T, Alloc>::reserve(std::size_t newCapacity) {
+    if (newCapacity <= capacity()) {
+        return;
+    }
+
+    BufferStorage<T, Alloc> newStorage(newCapacity);
+    std::size_t alreadyConstructed{};
+    try {
+        while (alreadyConstructed < m_size) {
+            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, data()[alreadyConstructed]);
+            ++alreadyConstructed;
+        }
+    } catch (...) {
+        while (alreadyConstructed > 0) {
+            --alreadyConstructed;
+            newStorage.allocator().destroy(newStorage.data() + alreadyConstructed);
+        }
+        throw;
+    }
+
+    const std::size_t oldSize = m_size;
+    clear();
+    m_storage = std::move(newStorage);
+    m_size = oldSize;
 }
 
 template<typename T, typename Alloc>

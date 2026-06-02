@@ -13,8 +13,11 @@ public:
     Vector(std::initializer_list<T> list);
     Vector(const Vector& rhs);
     Vector(Vector&& rhs) noexcept(std::is_nothrow_move_constructible_v<BufferStorage<T, Alloc>>);
+    Vector<T, Alloc>& operator=(const Vector<T, Alloc>& rhs);
+    Vector<T, Alloc>& operator=(Vector<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_assignable_v<BufferStorage<T, Alloc>>);
     ~Vector() noexcept;
 
+    void reserve(std::size_t newCapacity);
     void clear() noexcept;
     [[nodiscard]] std::size_t size() const noexcept;
     [[nodiscard]] std::size_t capacity() const noexcept;
