@@ -23,7 +23,9 @@ public:
 
     template<typename... Args>
     T& emplace_back(Args&&... args);
-
+    void pop_back();
+    void resize(std::size_t count, const T& value);
+    void resize(std::size_t count);
     void clear() noexcept;
     [[nodiscard]] std::size_t size() const noexcept;
     [[nodiscard]] std::size_t capacity() const noexcept;

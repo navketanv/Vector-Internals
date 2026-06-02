@@ -165,6 +165,40 @@ T& Vector<T, Alloc>::emplace_back(Args&&... args) {
 }
 
 template<typename T, typename Alloc>
+void Vector<T, Alloc>::pop_back() {
+    if (m_size > 0) {
+        --m_size;
+        allocator().destroy(data() + m_size);
+    }
+}
+
+template<typename T, typename Alloc>
+void Vector<T, Alloc>::resize(std::size_t count, const T& value) {
+    if (count == m_size) {
+        return;
+    }
+
+    if (count < m_size) {
+        while (count < m_size) {
+            pop_back();
+        }
+    } else {
+        if (count > capacity()) {
+            reserve(nextCapacity(count));
+        }
+        while (count > m_size) {
+            allocator().construct(data() + m_size, value);
+            ++m_size;
+        }
+    }
+}
+
+template<typename T, typename Alloc>
+void Vector<T, Alloc>::resize(std::size_t count) {
+    resize(count, T{});
+}
+
+template<typename T, typename Alloc>
 void Vector<T, Alloc>::clear() noexcept {
     while (m_size > 0) {
         --m_size;
