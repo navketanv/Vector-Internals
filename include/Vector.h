@@ -18,6 +18,12 @@ public:
     ~Vector() noexcept;
 
     void reserve(std::size_t newCapacity);
+    void push_back(const T& value);
+    void push_back(T&& value);
+
+    template<typename... Args>
+    T& emplace_back(Args&&... args);
+
     void clear() noexcept;
     [[nodiscard]] std::size_t size() const noexcept;
     [[nodiscard]] std::size_t capacity() const noexcept;
@@ -40,6 +46,10 @@ public:
 
     [[nodiscard]] T& back() noexcept;
     [[nodiscard]] const T& back() const noexcept;
+
+private:
+    [[nodiscard]] std::size_t maxSize() const noexcept;
+    [[nodiscard]] std::size_t nextCapacity(std::size_t required) const ;
 
 private:
     BufferStorage<T, Alloc> m_storage{};

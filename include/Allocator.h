@@ -13,4 +13,5 @@ public:
     template<typename... Args>
     void construct(T* ptr, Args&&... args);
     void destroy(T* ptr) noexcept;
+    std::size_t maxSize() const noexcept;
 };

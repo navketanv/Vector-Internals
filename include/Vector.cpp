@@ -118,7 +118,7 @@ void Vector<T, Alloc>::reserve(std::size_t newCapacity) {
     std::size_t alreadyConstructed{};
     try {
         while (alreadyConstructed < m_size) {
-            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, data()[alreadyConstructed]);
+            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, std::move_if_noexcept(data()[alreadyConstructed]));
             ++alreadyConstructed;
         }
     } catch (...) {
@@ -133,6 +133,35 @@ void Vector<T, Alloc>::reserve(std::size_t newCapacity) {
     clear();
     m_storage = std::move(newStorage);
     m_size = oldSize;
+}
+
+template<typename T, typename Alloc>
+void Vector<T, Alloc>::push_back(const T& value) {
+    if (m_size == capacity()) {
+        reserve(nextCapacity(m_size + 1));
+    }
+    allocator().construct(data() + m_size, value);
+    ++m_size;
+}
+
+template<typename T, typename Alloc>
+void Vector<T, Alloc>::push_back(T&& value) {
+    if (m_size == capacity()) {
+        reserve(nextCapacity(m_size + 1));
+    }
+    allocator().construct(data() + m_size, std::forward<T>(value));
+    ++m_size;
+}
+
+template<typename T, typename Alloc>
+template<typename... Args>
+T& Vector<T, Alloc>::emplace_back(Args&&... args) {
+    if (m_size == capacity()) {
+        reserve(nextCapacity(m_size + 1));
+    }
+    allocator().construct(data() + m_size, std::forward<Args>(args)...);
+    ++m_size;
+    return data()[m_size - 1];
 }
 
 template<typename T, typename Alloc>
@@ -222,4 +251,19 @@ T& Vector<T, Alloc>::back() noexcept {
 template<typename T, typename Alloc>
 const T& Vector<T, Alloc>::back() const noexcept {
     return *(data() + (m_size - 1));
+}
+
+template<typename T, typename Alloc>
+std::size_t Vector<T, Alloc>::maxSize() const noexcept {
+    return allocator().maxSize();
+}
+
+template<typename T, typename Alloc>
+std::size_t Vector<T, Alloc>::nextCapacity(std::size_t required) const {
+    if (required > maxSize()) {
+        throw std::length_error("Vector capacity exceeds maxSize()");
+    }
+
+    std::size_t newCapacity = capacity() == 0 ? 1 : capacity() * 2;
+    return std::max(newCapacity, required);
 }
