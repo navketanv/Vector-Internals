@@ -113,26 +113,7 @@ void Vector<T, Alloc>::reserve(std::size_t newCapacity) {
     if (newCapacity <= capacity()) {
         return;
     }
-
-    BufferStorage<T, Alloc> newStorage(newCapacity);
-    std::size_t alreadyConstructed{};
-    try {
-        while (alreadyConstructed < m_size) {
-            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, data()[alreadyConstructed]);
-            ++alreadyConstructed;
-        }
-    } catch (...) {
-        while (alreadyConstructed > 0) {
-            --alreadyConstructed;
-            newStorage.allocator().destroy(newStorage.data() + alreadyConstructed);
-        }
-        throw;
-    }
-
-    const std::size_t oldSize = m_size;
-    clear();
-    m_storage = std::move(newStorage);
-    m_size = oldSize;
+    reallocateStorage(newCapacity);
 }
 
 template<typename T, typename Alloc>
@@ -196,6 +177,14 @@ void Vector<T, Alloc>::resize(std::size_t count, const T& value) {
 template<typename T, typename Alloc>
 void Vector<T, Alloc>::resize(std::size_t count) {
     resize(count, T{});
+}
+
+template<typename T, typename Alloc>
+void Vector<T, Alloc>::shrink_to_fit() {
+    if (m_size == capacity()) {
+        return;
+    }
+    reallocateStorage(m_size);
 }
 
 template<typename T, typename Alloc>
@@ -285,6 +274,32 @@ T& Vector<T, Alloc>::back() noexcept {
 template<typename T, typename Alloc>
 const T& Vector<T, Alloc>::back() const noexcept {
     return *(data() + (m_size - 1));
+}
+
+template<typename T, typename Alloc>
+void Vector<T, Alloc>::reallocateStorage(std::size_t newCapacity) {
+    if (newCapacity < m_size) {
+        throw std::length_error("reallocateStorage() capacity is smaller than m_size");
+    }
+
+    BufferStorage<T, Alloc> newStorage(newCapacity);
+    std::size_t alreadyConstructed{};
+    try {
+        for (std::size_t index = 0; index < m_size; ++index) {
+            newStorage.allocator().construct(newStorage.data() + index, data()[index]);
+            ++alreadyConstructed;
+        }
+    } catch (...) {
+        while (alreadyConstructed > 0) {
+            --alreadyConstructed;
+            newStorage.allocator().destroy(newStorage.data() + alreadyConstructed);
+        }
+        throw;
+    }
+    const std::size_t oldSize = alreadyConstructed;
+    clear();
+    m_storage = std::move(newStorage);
+    m_size = oldSize;
 }
 
 template<typename T, typename Alloc>

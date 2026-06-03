@@ -26,6 +26,7 @@ public:
     void pop_back();
     void resize(std::size_t count, const T& value);
     void resize(std::size_t count);
+    void shrink_to_fit();
     void clear() noexcept;
     [[nodiscard]] std::size_t size() const noexcept;
     [[nodiscard]] std::size_t capacity() const noexcept;
@@ -50,6 +51,7 @@ public:
     [[nodiscard]] const T& back() const noexcept;
 
 private:
+    void reallocateStorage(std::size_t newCapacity);
     [[nodiscard]] std::size_t maxSize() const noexcept;
     [[nodiscard]] std::size_t nextCapacity(std::size_t required) const ;
 
