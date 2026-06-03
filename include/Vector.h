@@ -2,17 +2,22 @@
 #include "Allocator.h"
 #include "BufferStorage.h"
 #include <initializer_list>
+#include <cstddef>
+#include <type_traits>
 
 template<typename T, typename Alloc = Allocator<T>>
 class Vector
 {
+private:
+static constexpr bool kVectorSwapNoexcept = std::is_nothrow_swappable_v<BufferStorage<T, Alloc>> &&
+                                            std::is_nothrow_swappable_v<std::size_t>;
 public:
     Vector();
     Vector(std::size_t size, const T& value);
     explicit Vector(std::size_t size);
     Vector(std::initializer_list<T> list);
-    Vector(const Vector& rhs);
-    Vector(Vector&& rhs) noexcept(std::is_nothrow_move_constructible_v<BufferStorage<T, Alloc>>);
+    Vector(const Vector<T, Alloc>& rhs);
+    Vector(Vector<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_constructible_v<BufferStorage<T, Alloc>>);
     Vector<T, Alloc>& operator=(const Vector<T, Alloc>& rhs);
     Vector<T, Alloc>& operator=(Vector<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_assignable_v<BufferStorage<T, Alloc>>);
     ~Vector() noexcept;
@@ -27,6 +32,7 @@ public:
     void resize(std::size_t count, const T& value);
     void resize(std::size_t count);
     void shrink_to_fit();
+    void swap(Vector<T, Alloc>& rhs) noexcept(kVectorSwapNoexcept);
     void clear() noexcept;
     [[nodiscard]] std::size_t size() const noexcept;
     [[nodiscard]] std::size_t capacity() const noexcept;
@@ -59,3 +65,11 @@ private:
     BufferStorage<T, Alloc> m_storage{};
     std::size_t m_size{};
 };
+
+template<typename T, typename Alloc>
+void swap(Vector<T, Alloc>& lhs,
+          Vector<T, Alloc>& rhs)
+    noexcept(noexcept(lhs.swap(rhs)))
+{
+    lhs.swap(rhs);
+}

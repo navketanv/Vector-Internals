@@ -188,6 +188,13 @@ void Vector<T, Alloc>::shrink_to_fit() {
 }
 
 template<typename T, typename Alloc>
+void Vector<T, Alloc>::swap(Vector<T, Alloc>& rhs) noexcept(kVectorSwapNoexcept) {
+    using std::swap;
+    swap(m_storage, rhs.m_storage);
+    swap(m_size, rhs.m_size);
+}
+
+template<typename T, typename Alloc>
 void Vector<T, Alloc>::clear() noexcept {
     while (m_size > 0) {
         --m_size;

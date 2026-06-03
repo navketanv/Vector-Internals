@@ -8,11 +8,6 @@ BufferStorage<T, Alloc>::BufferStorage(std::size_t capacity)
     , m_capacity(capacity) {}
 
 template<typename T, typename Alloc>
-BufferStorage<T, Alloc>::~BufferStorage<T, Alloc>() {
-    m_allocator.deallocate(m_pData, m_capacity);
-}
-
-template<typename T, typename Alloc>
 BufferStorage<T, Alloc>::BufferStorage(BufferStorage<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_constructible_v<Alloc>)
     : m_allocator(std::move(rhs.m_allocator))
     , m_pData(std::exchange(rhs.m_pData, nullptr))
@@ -27,6 +22,20 @@ BufferStorage<T, Alloc>& BufferStorage<T, Alloc>::operator=(BufferStorage<T, All
         m_capacity = std::exchange(rhs.m_capacity, 0);
     }
     return *this;
+}
+
+template<typename T, typename Alloc>
+BufferStorage<T, Alloc>::~BufferStorage<T, Alloc>() {
+    m_allocator.deallocate(m_pData, m_capacity);
+}
+
+template<typename T, typename Alloc>
+void BufferStorage<T, Alloc>::swap(BufferStorage<T, Alloc>& rhs) noexcept(kStorageSwapNoexcept) {
+    using std::swap;
+    // allocator and storage must remain paired
+    swap(m_allocator, rhs.m_allocator);
+    swap(m_pData, rhs.m_pData);
+    swap(m_capacity, rhs.m_capacity);
 }
 
 template<typename T, typename Alloc>
