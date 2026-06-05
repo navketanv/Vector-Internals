@@ -4,10 +4,29 @@
 #include <initializer_list>
 #include <cstddef>
 #include <type_traits>
+#include <iterator>
 
 template<typename T, typename Alloc = Allocator<T>>
 class Vector
 {
+public:
+    using value_type = T;
+
+    using size_type = std::size_t;
+    using difference_type = std::ptrdiff_t;
+
+    using reference = T&;
+    using const_reference = const T&;
+
+    using pointer = T*;
+    using const_pointer = const T*;
+
+    using iterator = T*;
+    using const_iterator = const T*;
+
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
 private:
 static constexpr bool kVectorSwapNoexcept = std::is_nothrow_swappable_v<BufferStorage<T, Alloc>> &&
                                             std::is_nothrow_swappable_v<std::size_t>;
@@ -55,6 +74,24 @@ public:
 
     [[nodiscard]] T& back() noexcept;
     [[nodiscard]] const T& back() const noexcept;
+
+    [[nodiscard]] typename Vector<T, Alloc>::iterator begin() noexcept;
+    [[nodiscard]] typename Vector<T, Alloc>::const_iterator begin() const noexcept;
+    [[nodiscard]] typename Vector<T, Alloc>::const_iterator cbegin() const noexcept;
+
+
+    [[nodiscard]] typename Vector<T, Alloc>::iterator end() noexcept;
+    [[nodiscard]] typename Vector<T, Alloc>::const_iterator end() const noexcept;
+    [[nodiscard]] typename Vector<T, Alloc>::const_iterator cend() const noexcept;
+
+    [[nodiscard]] typename Vector<T, Alloc>::reverse_iterator rbegin() noexcept;
+    [[nodiscard]] typename Vector<T, Alloc>::const_reverse_iterator rbegin() const noexcept;
+    [[nodiscard]] typename Vector<T, Alloc>::const_reverse_iterator crbegin() const noexcept;
+
+
+    [[nodiscard]] typename Vector<T, Alloc>::reverse_iterator rend() noexcept;
+    [[nodiscard]] typename Vector<T, Alloc>::const_reverse_iterator rend() const noexcept;
+    [[nodiscard]] typename Vector<T, Alloc>::const_reverse_iterator crend() const noexcept;
 
 private:
     void reallocateStorage(std::size_t newCapacity);

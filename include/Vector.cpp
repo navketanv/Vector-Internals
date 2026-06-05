@@ -284,6 +284,66 @@ const T& Vector<T, Alloc>::back() const noexcept {
 }
 
 template<typename T, typename Alloc>
+typename Vector<T, Alloc>::iterator Vector<T, Alloc>::begin() noexcept {
+    return data();
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::const_iterator Vector<T, Alloc>::begin() const noexcept {
+    return data();
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::const_iterator Vector<T, Alloc>::cbegin() const noexcept {
+    return data();
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::iterator Vector<T, Alloc>::end() noexcept {
+    return (data() + m_size);
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::const_iterator Vector<T, Alloc>::end() const noexcept {
+    return (data() + m_size);
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::const_iterator Vector<T, Alloc>::cend() const noexcept {
+    return (data() + m_size);
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::reverse_iterator Vector<T, Alloc>::rbegin() noexcept {
+    return Vector<T, Alloc>::reverse_iterator(end());
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::const_reverse_iterator Vector<T, Alloc>::rbegin() const noexcept {
+    return Vector<T, Alloc>::const_reverse_iterator(end());
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::const_reverse_iterator Vector<T, Alloc>::crbegin() const noexcept {
+    return Vector<T, Alloc>::const_reverse_iterator(cend());
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::reverse_iterator Vector<T, Alloc>::rend() noexcept {
+    return Vector<T, Alloc>::reverse_iterator(begin());
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::const_reverse_iterator Vector<T, Alloc>::rend() const noexcept {
+    return Vector<T, Alloc>::const_reverse_iterator(begin());
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::const_reverse_iterator Vector<T, Alloc>::crend() const noexcept {
+    return Vector<T, Alloc>::const_reverse_iterator(cbegin());
+}
+
+template<typename T, typename Alloc>
 void Vector<T, Alloc>::reallocateStorage(std::size_t newCapacity) {
     if (newCapacity < m_size) {
         throw std::length_error("reallocateStorage() capacity is smaller than m_size");
