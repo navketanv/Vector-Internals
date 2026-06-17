@@ -17,4 +17,4 @@ install(TARGETS Vector-Internals
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-target_sources(Vector-Internals PRIVATE)
+#target_sources(Vector-Internals PRIVATE)

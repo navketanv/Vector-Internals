@@ -42,6 +42,9 @@ public:
     ~Vector() noexcept;
 
     void reserve(std::size_t newCapacity);
+    typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, const T& value);
+    typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, T&& value);
+    typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, size_type count, const T& value);
     void push_back(const T& value);
     void push_back(T&& value);
 
@@ -95,6 +98,13 @@ public:
 
 private:
     void reallocateStorage(std::size_t newCapacity);
+    template<typename... Args>
+    typename Vector<T, Alloc>::iterator insertInPlace(std::size_t insertionIndex, Args&&... args);
+    typename Vector<T, Alloc>::iterator insertInPlace(std::size_t insertionIndex, std::size_t count, const T& value);
+    template<typename... Args>
+    typename Vector<T, Alloc>::iterator reallocateAndInsert(std::size_t insertionIndex, Args&&... args);
+    typename Vector<T, Alloc>::iterator reallocateAndInsert(std::size_t insertionIndex, std::size_t count, const T& value);
+    [[nodiscard]] bool isValidIterator(Vector<T, Alloc>::const_iterator pos) const;
     [[nodiscard]] std::size_t maxSize() const noexcept;
     [[nodiscard]] std::size_t nextCapacity(std::size_t required) const ;
 

@@ -72,3 +72,6 @@ template<typename T, typename Alloc>
 BufferStorage<T, Alloc>::operator bool() const noexcept {
     return m_pData != nullptr;
 }
+
+template class BufferStorage<int>;
+template class BufferStorage<double>;
