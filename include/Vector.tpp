@@ -1,4 +1,3 @@
-#include "Vector.h"
 #include <algorithm>
 #include <stdexcept>
 #include <utility>
@@ -153,10 +152,29 @@ Vector<T, Alloc>::insert(Vector<T, Alloc>::const_iterator pos, size_type count, 
     if (count == 0) {
         return data() + insertionIndex;
     }
+    checkGrowth(count);
     if (m_size + count <= capacity()) {
         return insertInPlace(insertionIndex, count, value);
     }
     return reallocateAndInsert(insertionIndex, count, value);
+}
+
+template<typename T, typename Alloc>
+template<typename InputIt>
+    requires(
+        !std::is_integral_v<InputIt>)
+typename Vector<T, Alloc>::iterator Vector<T, Alloc>::insert(Vector<T, Alloc>::const_iterator pos, InputIt first, InputIt last) {
+    if (!isValidIterator(pos)) {
+        throw std::out_of_range("Vector::insert invalid iterator");
+    }
+
+    using Category = typename std::iterator_traits<InputIt>::iterator_category;
+    return insertRange(pos, first, last, Category{});
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::iterator Vector<T, Alloc>::insert(Vector<T, Alloc>::const_iterator pos, std::initializer_list<T> ilist) {
+    return insert(pos, ilist.begin(), ilist.end());
 }
 
 template<typename T, typename Alloc>
@@ -387,6 +405,57 @@ typename Vector<T, Alloc>::const_reverse_iterator Vector<T, Alloc>::crend() cons
 }
 
 template<typename T, typename Alloc>
+template<typename InputIt>
+typename Vector<T, Alloc>::iterator
+Vector<T, Alloc>::insertRange(Vector<T, Alloc>::const_iterator pos, InputIt first, InputIt last, std::input_iterator_tag) {
+    Vector<T, Alloc> temp;
+    for (InputIt it = first; it != last; ++it) {
+        temp.push_back(*it);
+    }
+    return insert(pos, temp.begin(), temp.end());
+}
+
+template<typename T, typename Alloc>
+template<typename ForwardIt>
+typename Vector<T, Alloc>::iterator
+Vector<T, Alloc>::insertRange(Vector<T, Alloc>::const_iterator pos, ForwardIt first, ForwardIt last, std::forward_iterator_tag) {
+    const std::size_t insertionIndex = static_cast<std::size_t>(std::distance(cbegin(), pos));
+    const std::size_t count = static_cast<std::size_t>(std::distance(first, last));
+    if (count == 0) {
+        return data() + insertionIndex;
+    }
+    checkGrowth(count);
+    if (m_size + count <= capacity()) {
+        return insertRangeInPlace(insertionIndex, count, first, last);
+    }
+    return reallocateAndInsertRange(insertionIndex, count, first, last);
+}
+
+template<typename T, typename Alloc>
+template<typename BidirectionalIt>
+typename Vector<T, Alloc>::iterator
+Vector<T, Alloc>::insertRange(Vector<T, Alloc>::const_iterator pos, BidirectionalIt first, BidirectionalIt last, std::bidirectional_iterator_tag) {
+    return insertRange(pos, first, last, std::forward_iterator_tag{});
+}
+
+template<typename T, typename Alloc>
+template<typename RandomAccessIt>
+typename Vector<T, Alloc>::iterator
+Vector<T, Alloc>::insertRange(Vector<T, Alloc>::const_iterator pos, RandomAccessIt first, RandomAccessIt last, std::random_access_iterator_tag) {
+    return insertRange(pos, first, last, std::forward_iterator_tag{});
+}
+
+template<typename T, typename Alloc>
+template<typename ContiguousIt>
+typename Vector<T, Alloc>::iterator
+Vector<T, Alloc>::insertRange(Vector<T, Alloc>::const_iterator pos, ContiguousIt first, ContiguousIt last, std::contiguous_iterator_tag) {
+    return insertRange(pos, first, last, std::forward_iterator_tag{});
+}
+
+// TODO:
+// During reallocation consider std::move_if_noexcept
+// to better match std::vector strong exception guarantees.
+template<typename T, typename Alloc>
 void Vector<T, Alloc>::reallocateStorage(std::size_t newCapacity) {
     if (newCapacity < m_size) {
         throw std::length_error("reallocateStorage() capacity is smaller than m_size");
@@ -468,6 +537,51 @@ Vector<T, Alloc>::insertInPlace(std::size_t insertionIndex, std::size_t count, c
 }
 
 template<typename T, typename Alloc>
+template<typename ForwardIt>
+typename Vector<T, Alloc>::iterator
+Vector<T, Alloc>::insertRangeInPlace(std::size_t insertionIndex, std::size_t count, ForwardIt first, ForwardIt last) {
+    Vector<T, Alloc> temp;
+    for (ForwardIt it = first; it != last; ++it) {
+        temp.push_back(*it);
+    }
+    if (insertionIndex == m_size) {
+        for (std::size_t index = 0; index < count; ++index) {
+            allocator().construct(data() + m_size + index, std::move(temp[index]));
+        }
+    } else {
+        const std::size_t suffixSize = m_size - insertionIndex;
+        if (count <= suffixSize) {
+            for (std::size_t index = 0; index < count; ++index) {
+                allocator().construct(data() + m_size + index, std::move(data()[m_size + index - count]));
+            }
+            for (std::size_t index = m_size - count; index > insertionIndex; --index) {
+                data()[index + count - 1] = std::move(data()[index - 1]);
+            }
+            for (std::size_t index = 0; index < count; ++index) {
+                data()[insertionIndex + index] = std::move(temp[index]);
+            }
+        } else {
+            const std::size_t overflow = count - suffixSize;
+            for (std::size_t suffixIndex = 0; suffixIndex < suffixSize; ++suffixIndex) {
+                allocator().construct(data() + m_size + overflow + suffixIndex, std::move(data()[insertionIndex + suffixIndex]));
+            }
+            std::size_t tempIndex{};
+            for (std::size_t index = insertionIndex; index < m_size && tempIndex < count; ++index, ++tempIndex) {
+                data()[index] = std::move(temp[tempIndex]);
+            }
+            for (std::size_t index = 0; index < overflow && tempIndex < count; ++index, ++tempIndex) {
+                allocator().construct(data() + m_size + index, std::move(temp[tempIndex]));
+            }
+        }
+    }
+    m_size += count;
+    return (data() + insertionIndex);
+}
+
+// TODO:
+// During reallocation consider std::move_if_noexcept
+// to better match std::vector strong exception guarantees.
+template<typename T, typename Alloc>
 template<typename... Args>
 typename Vector<T, Alloc>::iterator
 Vector<T, Alloc>::reallocateAndInsert(std::size_t insertionIndex, Args&&... args) {
@@ -497,7 +611,9 @@ Vector<T, Alloc>::reallocateAndInsert(std::size_t insertionIndex, Args&&... args
     m_size = newSize;
     return (data() + insertionIndex);
 }
-
+// TODO:
+// During reallocation consider std::move_if_noexcept
+// to better match std::vector strong exception guarantees.
 template<typename T, typename Alloc>
 typename Vector<T, Alloc>::iterator
 Vector<T, Alloc>::reallocateAndInsert(std::size_t insertionIndex, std::size_t count, const T& value) {
@@ -510,6 +626,41 @@ Vector<T, Alloc>::reallocateAndInsert(std::size_t insertionIndex, std::size_t co
         }
         for (std::size_t index = 0; index < count; ++index) {
             newStorage.allocator().construct(newStorage.data() + alreadyConstructed, value);
+            ++alreadyConstructed;
+        }
+        for (std::size_t index = insertionIndex; index < m_size; ++index) {
+            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, data()[index]);
+            ++alreadyConstructed;
+        }
+    } catch (...) {
+        while (alreadyConstructed > 0) {
+            --alreadyConstructed;
+            newStorage.allocator().destroy(newStorage.data() + alreadyConstructed);
+        }
+        throw;
+    }
+    const std::size_t newSize = alreadyConstructed;
+    clear();
+    m_storage = std::move(newStorage);
+    m_size = newSize;
+    return (data() + insertionIndex);
+}
+
+// TODO:
+// During reallocation consider std::move_if_noexcept
+// to better match std::vector strong exception guarantees.
+template<typename T, typename Alloc>
+template<typename ForwardIt>
+typename Vector<T, Alloc>::iterator Vector<T, Alloc>::reallocateAndInsertRange(std::size_t insertionIndex, std::size_t count, ForwardIt first, ForwardIt last) {
+    BufferStorage<T, Alloc> newStorage(nextCapacity(m_size + count));
+    std::size_t alreadyConstructed{};
+    try {
+        for (std::size_t index = 0; index < insertionIndex; ++index) {
+            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, data()[index]);
+            ++alreadyConstructed;
+        }
+        for (ForwardIt it = first; it != last; ++it) {
+            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, *it);
             ++alreadyConstructed;
         }
         for (std::size_t index = insertionIndex; index < m_size; ++index) {
@@ -574,5 +725,10 @@ std::size_t Vector<T, Alloc>::nextCapacity(std::size_t required) const {
     return std::max(newCapacity, required);
 }
 
-template class Vector<int>;
-template class Vector<double>;
+template<typename T, typename Alloc>
+void Vector<T, Alloc>::checkGrowth(size_type count) const {
+    if (count > maxSize() - m_size)
+    {
+        throw std::length_error("Vector growth would exceed maxSize()");
+    }
+}

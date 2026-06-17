@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(Vector-Internals src/Vector-Internals.cpp
-    include/Vector.h include/Vector.cpp
-    include/Allocator.h include/Allocator.cpp
-    include/BufferStorage.h include/BufferStorage.cpp
+    include/Vector.h include/Vector.tpp
+    include/Allocator.h include/Allocator.tpp
+    include/BufferStorage.h include/BufferStorage.tpp
 )
 
 include(GNUInstallDirs)
@@ -17,4 +17,4 @@ install(TARGETS Vector-Internals
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-#target_sources(Vector-Internals PRIVATE)
+target_sources(Vector-Internals PRIVATE include/Allocator.tpp include/BufferStorage.tpp include/Vector.tpp)

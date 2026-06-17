@@ -45,6 +45,13 @@ public:
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, const T& value);
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, T&& value);
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, size_type count, const T& value);
+    template<typename InputIt>
+        requires(
+            !std::is_integral_v<InputIt>
+            )
+    typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, InputIt first, InputIt last);
+    typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, std::initializer_list<T> ilist);
+
     void push_back(const T& value);
     void push_back(T&& value);
 
@@ -97,17 +104,33 @@ public:
     [[nodiscard]] typename Vector<T, Alloc>::const_reverse_iterator crend() const noexcept;
 
 private:
+    template<typename InputIt>
+    typename Vector<T, Alloc>::iterator insertRange(Vector<T, Alloc>::const_iterator pos, InputIt first, InputIt last, std::input_iterator_tag);
+    template<typename ForwardIt>
+    typename Vector<T, Alloc>::iterator insertRange(Vector<T, Alloc>::const_iterator pos, ForwardIt first, ForwardIt last, std::forward_iterator_tag);
+    template<typename BidirectionalIt>
+    typename Vector<T, Alloc>::iterator insertRange(Vector<T, Alloc>::const_iterator pos, BidirectionalIt first, BidirectionalIt last, std::bidirectional_iterator_tag);
+    template<typename RandomAccessIt>
+    typename Vector<T, Alloc>::iterator insertRange(Vector<T, Alloc>::const_iterator pos, RandomAccessIt first, RandomAccessIt last, std::random_access_iterator_tag);
+    template<typename ContiguousIt>
+    typename Vector<T, Alloc>::iterator insertRange(Vector<T, Alloc>::const_iterator pos, ContiguousIt first, ContiguousIt last, std::contiguous_iterator_tag);
+
     void reallocateStorage(std::size_t newCapacity);
     template<typename... Args>
     typename Vector<T, Alloc>::iterator insertInPlace(std::size_t insertionIndex, Args&&... args);
     typename Vector<T, Alloc>::iterator insertInPlace(std::size_t insertionIndex, std::size_t count, const T& value);
+    template<typename ForwardIt>
+    typename Vector<T, Alloc>::iterator insertRangeInPlace(std::size_t insertionIndex, std::size_t count, ForwardIt first, ForwardIt last);
     template<typename... Args>
     typename Vector<T, Alloc>::iterator reallocateAndInsert(std::size_t insertionIndex, Args&&... args);
     typename Vector<T, Alloc>::iterator reallocateAndInsert(std::size_t insertionIndex, std::size_t count, const T& value);
+    template<typename ForwardIt>
+    typename Vector<T, Alloc>::iterator reallocateAndInsertRange(std::size_t insertionIndex, std::size_t count, ForwardIt first, ForwardIt last);
+
     [[nodiscard]] bool isValidIterator(Vector<T, Alloc>::const_iterator pos) const;
     [[nodiscard]] std::size_t maxSize() const noexcept;
     [[nodiscard]] std::size_t nextCapacity(std::size_t required) const ;
-
+    void checkGrowth(size_type count) const;
 private:
     BufferStorage<T, Alloc> m_storage{};
     std::size_t m_size{};
@@ -120,3 +143,4 @@ void swap(Vector<T, Alloc>& lhs,
 {
     lhs.swap(rhs);
 }
+#include "Vector.tpp"

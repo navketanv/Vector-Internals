@@ -1,4 +1,3 @@
-#include "Allocator.h"
 #include <new>
 #include <limits>
 #include <utility>
@@ -19,7 +18,7 @@ template<typename T>
 void Allocator<T>::deallocate(T* ptr, std::size_t count) noexcept {
     ::operator delete(ptr, (sizeof(T) * count));
 }
-/*
+
 template<typename T>
 template<typename... Args>
 void Allocator<T>::construct(T* ptr, Args&&... args) {
@@ -27,7 +26,7 @@ void Allocator<T>::construct(T* ptr, Args&&... args) {
         ::new (static_cast<void*>(ptr)) T(std::forward<Args>(args)...);
     }
 }
-*/
+
 template<typename T>
 void Allocator<T>::destroy(T* ptr) noexcept {
     if (ptr != nullptr) {
@@ -39,6 +38,3 @@ template<typename T>
 std::size_t Allocator<T>::maxSize() const noexcept {
     return std::numeric_limits<std::size_t>::max() / sizeof(T);
 }
-
-template class Allocator<int>;
-template class Allocator<double>;

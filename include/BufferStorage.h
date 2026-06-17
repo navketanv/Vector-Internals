@@ -47,3 +47,5 @@ void swap(BufferStorage<T, Alloc>& lhs,
 {
     lhs.swap(rhs);
 }
+
+#include "BufferStorage.tpp"
