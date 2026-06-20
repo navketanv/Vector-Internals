@@ -6,13 +6,19 @@
 template<typename T, typename Alloc = Allocator<T>>
 class BufferStorage
 {
+public:
+    using allocator_type = Alloc;
+    using size_type = std::size_t;
+    using pointer = T*;
+    using const_pointer = const T*;
+
 private:
     static constexpr bool kStorageSwapNoexcept = std::is_nothrow_swappable_v<Alloc> &&
                                                  std::is_nothrow_swappable_v<T*> &&
-                                                 std::is_nothrow_swappable_v<std::size_t>;
+                                                 std::is_nothrow_swappable_v<size_type>;
 public:
     BufferStorage() = default;
-    explicit BufferStorage(std::size_t capacity);
+    explicit BufferStorage(BufferStorage<T, Alloc>::size_type capacity);
 
     BufferStorage(const BufferStorage<T, Alloc>& rhs) = delete;
     BufferStorage<T, Alloc>& operator=(const BufferStorage<T, Alloc>& rhs) = delete;
@@ -24,20 +30,20 @@ public:
 
     void swap(BufferStorage<T, Alloc>& rhs) noexcept(kStorageSwapNoexcept);
 
-    [[nodiscard]] T* data() noexcept;
-    [[nodiscard]] const T* data() const noexcept;
+    [[nodiscard]] typename BufferStorage<T, Alloc>::pointer data() noexcept;
+    [[nodiscard]] typename BufferStorage<T, Alloc>::const_pointer data() const noexcept;
 
-    Alloc& allocator() noexcept;
-    const Alloc& allocator() const noexcept;
+    typename BufferStorage<T, Alloc>::allocator_type& allocator() noexcept;
+    const typename BufferStorage<T, Alloc>::allocator_type& allocator() const noexcept;
 
-    [[nodiscard]] std::size_t capacity() const noexcept;
+    [[nodiscard]] typename BufferStorage<T, Alloc>::size_type capacity() const noexcept;
     [[nodiscard]] bool empty() const noexcept;
     [[nodiscard]] explicit operator bool() const noexcept;
 
 private:
     Alloc m_allocator{};
     T* m_pData{nullptr};
-    std::size_t m_capacity{};
+    size_type m_capacity{};
 };
 
 template<typename T, typename Alloc>
