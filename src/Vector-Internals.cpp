@@ -120,14 +120,83 @@ int main()
     std::cout << '\n';
 
     v = {1,2,3};
-    v.insert(v.begin() + 1,
-             v.begin(),
-             v.end());
-
-    for (auto x : v)
-    {
+    v.insert(v.begin() + 1, v.begin(), v.end());
+    for (auto x : v) {
         std::cout << x << ' ';
     }
     std::cout << '\n';
+    v = {1,2,3,4,5};
+    v.erase(v.begin() + 1, v.begin() + 3);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+    v = {1,2,3,4};
+
+    auto it = v.erase(v.begin(), v.end());
+
+    std::cout << v.size() << '\n';
+    std::cout << (it == v.end()) << '\n';
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+    // erase first element
+    v = {1,2,3,4};
+    v.erase(v.begin());
+    // expected: 2 3 4
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+    // erase last element
+    v = {1,2,3,4};
+    v.erase(v.end() - 1);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+    // expected: 1 2 3
+    // erase middle element
+    v = {1,2,3,4};
+    v.erase(v.begin() + 2);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+    // expected: 1 2 4
+    // erase empty range
+    v = {1,2,3,4};
+    it = v.erase(v.begin() + 1, v.begin() + 1);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+    std::cout << *it << '\n';
+    // vector unchanged
+    // it should point to element 2
+    // erase suffix
+    v = {1,2,3,4,5};
+    v.erase(v.begin() + 2, v.end());
+    // expected: 1 2
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+    // erase prefix
+    v = {1,2,3,4,5};
+    v.erase(v.begin(), v.begin() + 3);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+    // expected: 4 5
+    v = {1,2,3};
+    it = v.erase(v.begin()+1, v.begin()+1);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+    std::cout << *it << '\n';
     return 0;
 }

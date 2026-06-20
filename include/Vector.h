@@ -51,6 +51,8 @@ public:
             )
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, InputIt first, InputIt last);
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, std::initializer_list<T> ilist);
+    typename Vector<T, Alloc>::iterator erase(Vector<T, Alloc>::const_iterator first, Vector<T, Alloc>::const_iterator last);
+    typename Vector<T, Alloc>::iterator erase(Vector<T, Alloc>::const_iterator pos);
 
     void push_back(const T& value);
     void push_back(T&& value);

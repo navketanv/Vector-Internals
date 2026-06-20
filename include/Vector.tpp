@@ -178,6 +178,38 @@ typename Vector<T, Alloc>::iterator Vector<T, Alloc>::insert(Vector<T, Alloc>::c
 }
 
 template<typename T, typename Alloc>
+typename Vector<T, Alloc>::iterator
+Vector<T, Alloc>::erase(Vector<T, Alloc>::const_iterator first, Vector<T, Alloc>::const_iterator last) {
+    if (!isValidIterator(first) ||
+        !isValidIterator(last) ||
+        (first > last))
+    {
+        throw std::out_of_range("Vector::erase invalid iterator range");
+    }
+
+    const std::size_t eraseStartIndex = static_cast<std::size_t>(std::distance(cbegin(), first));
+    const std::size_t eraseCount = static_cast<std::size_t>(std::distance(first, last));
+    if (eraseCount == 0) {
+        return (data() + eraseStartIndex);
+    }
+    for (std::size_t index = eraseStartIndex; index + eraseCount < m_size; ++index) {
+        data()[index] = std::move(data()[index + eraseCount]);
+    }
+
+    for (std::size_t index = 0; index < eraseCount; ++index) {
+        --m_size;
+        allocator().destroy(data() + m_size);
+    }
+    return (data() + eraseStartIndex);
+}
+
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::iterator
+Vector<T, Alloc>::erase(Vector<T, Alloc>::const_iterator pos) {
+    return erase(pos, pos + 1);
+}
+
+template<typename T, typename Alloc>
 void Vector<T, Alloc>::push_back(const T& value) {
     if (m_size == capacity()) {
         reserve(nextCapacity(m_size + 1));
