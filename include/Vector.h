@@ -1,6 +1,7 @@
 #pragma once
 #include "Allocator.h"
 #include "BufferStorage.h"
+#include "IteratorBase.h"
 #include <initializer_list>
 #include <cstddef>
 #include <type_traits>
@@ -22,8 +23,8 @@ public:
     using pointer = T*;
     using const_pointer = const T*;
 
-    using iterator = T*;
-    using const_iterator = const T*;
+    using iterator = IteratorBase<T, false>;
+    using const_iterator = IteratorBase<T, true>;
 
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;

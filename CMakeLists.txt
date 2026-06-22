@@ -9,6 +9,9 @@ add_executable(Vector-Internals src/Vector-Internals.cpp
     include/Vector.h include/Vector.tpp
     include/Allocator.h include/Allocator.tpp
     include/BufferStorage.h include/BufferStorage.tpp
+
+
+    include/IteratorBase.h
 )
 
 include(GNUInstallDirs)
