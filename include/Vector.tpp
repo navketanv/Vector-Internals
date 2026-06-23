@@ -45,6 +45,16 @@ Vector<T, Alloc>::Vector(std::initializer_list<T> list)
 }
 
 template<typename T, typename Alloc>
+template<typename InputIt>
+    requires(!std::is_integral_v<InputIt>)
+Vector<T, Alloc>::Vector(InputIt first, InputIt last)
+    : m_storage{}
+    , m_size{}
+{
+    insert(end(), first, last);
+}
+
+template<typename T, typename Alloc>
 Vector<T, Alloc>::Vector(const Vector<T, Alloc>& rhs)
     : m_storage(rhs.capacity())
     , m_size{}
@@ -161,8 +171,7 @@ Vector<T, Alloc>::insert(Vector<T, Alloc>::const_iterator pos, Vector<T, Alloc>:
 
 template<typename T, typename Alloc>
 template<typename InputIt>
-    requires(
-        !std::is_integral_v<InputIt>)
+    requires(!std::is_integral_v<InputIt>)
 typename Vector<T, Alloc>::iterator Vector<T, Alloc>::insert(Vector<T, Alloc>::const_iterator pos, InputIt first, InputIt last) {
     if (!isValidIterator(pos)) {
         throw std::out_of_range("Vector::insert invalid iterator");
@@ -511,9 +520,6 @@ Vector<T, Alloc>::insertRange(Vector<T, Alloc>::const_iterator pos, ContiguousIt
     return insertRange(pos, first, last, std::forward_iterator_tag{});
 }
 
-// TODO:
-// During reallocation consider std::move_if_noexcept
-// to better match std::vector strong exception guarantees.
 template<typename T, typename Alloc>
 void Vector<T, Alloc>::reallocateStorage(Vector<T, Alloc>::size_type newCapacity) {
     if (newCapacity < m_size) {
@@ -524,7 +530,7 @@ void Vector<T, Alloc>::reallocateStorage(Vector<T, Alloc>::size_type newCapacity
     size_type alreadyConstructed{};
     try {
         for (size_type index = 0; index < m_size; ++index) {
-            newStorage.allocator().construct(newStorage.data() + index, data()[index]);
+            newStorage.allocator().construct(newStorage.data() + index, std::move_if_noexcept(data()[index]));
             ++alreadyConstructed;
         }
     } catch (...) {
@@ -637,9 +643,6 @@ Vector<T, Alloc>::insertRangeInPlace(size_type insertionIndex, size_type count, 
     return Vector<T, Alloc>::iterator(data() + insertionIndex);
 }
 
-// TODO:
-// During reallocation consider std::move_if_noexcept
-// to better match std::vector strong exception guarantees.
 template<typename T, typename Alloc>
 template<typename... Args>
 typename Vector<T, Alloc>::iterator
@@ -648,47 +651,13 @@ Vector<T, Alloc>::reallocateAndInsert(size_type insertionIndex, Args&&... args) 
     size_type alreadyConstructed{};
     try {
         for (size_type index = 0; index < insertionIndex; ++index) {
-            newStorage.allocator().construct(newStorage.data() + index, data()[index]);
+            newStorage.allocator().construct(newStorage.data() + index, std::move_if_noexcept(data()[index]));
             ++alreadyConstructed;
         }
         newStorage.allocator().construct(newStorage.data() + alreadyConstructed, std::forward<Args>(args)...);
         ++alreadyConstructed;
         for (size_type index = insertionIndex; index < m_size; ++index) {
-            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, data()[index]);
-            ++alreadyConstructed;
-        }
-    } catch (...) {
-        while (alreadyConstructed > 0) {
-            --alreadyConstructed;
-            newStorage.allocator().destroy(newStorage.data() + alreadyConstructed);
-        }
-        throw;
-    }
-    const size_type newSize = alreadyConstructed;
-    clear();
-    m_storage = std::move(newStorage);
-    m_size = newSize;
-    return Vector<T, Alloc>::iterator(data() + insertionIndex);
-}
-// TODO:
-// During reallocation consider std::move_if_noexcept
-// to better match std::vector strong exception guarantees.
-template<typename T, typename Alloc>
-typename Vector<T, Alloc>::iterator
-Vector<T, Alloc>::reallocateAndInsert(size_type insertionIndex, size_type count, const T& value) {
-    BufferStorage<T, Alloc> newStorage(nextCapacity(m_size + count));
-    size_type alreadyConstructed{};
-    try {
-        for (size_type index = 0; index < insertionIndex; ++index) {
-            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, data()[index]);
-            ++alreadyConstructed;
-        }
-        for (size_type index = 0; index < count; ++index) {
-            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, value);
-            ++alreadyConstructed;
-        }
-        for (size_type index = insertionIndex; index < m_size; ++index) {
-            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, data()[index]);
+            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, std::move_if_noexcept(data()[index]));
             ++alreadyConstructed;
         }
     } catch (...) {
@@ -705,9 +674,38 @@ Vector<T, Alloc>::reallocateAndInsert(size_type insertionIndex, size_type count,
     return Vector<T, Alloc>::iterator(data() + insertionIndex);
 }
 
-// TODO:
-// During reallocation consider std::move_if_noexcept
-// to better match std::vector strong exception guarantees.
+template<typename T, typename Alloc>
+typename Vector<T, Alloc>::iterator
+Vector<T, Alloc>::reallocateAndInsert(size_type insertionIndex, size_type count, const T& value) {
+    BufferStorage<T, Alloc> newStorage(nextCapacity(m_size + count));
+    size_type alreadyConstructed{};
+    try {
+        for (size_type index = 0; index < insertionIndex; ++index) {
+            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, std::move_if_noexcept(data()[index]));
+            ++alreadyConstructed;
+        }
+        for (size_type index = 0; index < count; ++index) {
+            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, value);
+            ++alreadyConstructed;
+        }
+        for (size_type index = insertionIndex; index < m_size; ++index) {
+            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, std::move_if_noexcept(data()[index]));
+            ++alreadyConstructed;
+        }
+    } catch (...) {
+        while (alreadyConstructed > 0) {
+            --alreadyConstructed;
+            newStorage.allocator().destroy(newStorage.data() + alreadyConstructed);
+        }
+        throw;
+    }
+    const size_type newSize = alreadyConstructed;
+    clear();
+    m_storage = std::move(newStorage);
+    m_size = newSize;
+    return Vector<T, Alloc>::iterator(data() + insertionIndex);
+}
+
 template<typename T, typename Alloc>
 template<typename ForwardIt>
 typename Vector<T, Alloc>::iterator Vector<T, Alloc>::reallocateAndInsertRange(size_type insertionIndex, size_type count, ForwardIt first, ForwardIt last) {
@@ -715,7 +713,7 @@ typename Vector<T, Alloc>::iterator Vector<T, Alloc>::reallocateAndInsertRange(s
     size_type alreadyConstructed{};
     try {
         for (size_type index = 0; index < insertionIndex; ++index) {
-            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, data()[index]);
+            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, std::move_if_noexcept(data()[index]));
             ++alreadyConstructed;
         }
         for (ForwardIt it = first; it != last; ++it) {
@@ -723,7 +721,7 @@ typename Vector<T, Alloc>::iterator Vector<T, Alloc>::reallocateAndInsertRange(s
             ++alreadyConstructed;
         }
         for (size_type index = insertionIndex; index < m_size; ++index) {
-            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, data()[index]);
+            newStorage.allocator().construct(newStorage.data() + alreadyConstructed, std::move_if_noexcept(data()[index]));
             ++alreadyConstructed;
         }
     } catch (...) {

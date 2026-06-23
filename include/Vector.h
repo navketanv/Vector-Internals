@@ -37,6 +37,9 @@ public:
     Vector(Vector<T, Alloc>::size_type size, const T& value);
     explicit Vector(Vector<T, Alloc>::size_type size);
     Vector(std::initializer_list<T> list);
+    template<typename InputIt>
+        requires(!std::is_integral_v<InputIt>)
+    Vector(InputIt first, InputIt last);
     Vector(const Vector<T, Alloc>& rhs);
     Vector(Vector<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_constructible_v<BufferStorage<T, Alloc>>);
     Vector<T, Alloc>& operator=(const Vector<T, Alloc>& rhs);
@@ -48,9 +51,7 @@ public:
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, T&& value);
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, Vector<T, Alloc>::size_type count, const T& value);
     template<typename InputIt>
-        requires(
-            !std::is_integral_v<InputIt>
-            )
+        requires(!std::is_integral_v<InputIt>)
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, InputIt first, InputIt last);
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, std::initializer_list<T> ilist);
     typename Vector<T, Alloc>::iterator erase(Vector<T, Alloc>::const_iterator first, Vector<T, Alloc>::const_iterator last);

@@ -5,6 +5,58 @@
 #include <sstream>
 #include <algorithm>
 #include <numeric>
+#include <cassert>
+#include <random>
+
+struct CopyPreferred
+{
+    static inline std::size_t copies{};
+    static inline std::size_t moves{};
+
+    CopyPreferred() = default;
+
+    CopyPreferred(const CopyPreferred&)
+    {
+        ++copies;
+    }
+
+    CopyPreferred(CopyPreferred&&)
+    {
+        ++moves;
+    }
+};
+
+struct MovePreferred
+{
+    static inline std::size_t copies{};
+    static inline std::size_t moves{};
+
+    MovePreferred() = default;
+
+    MovePreferred(const MovePreferred&)
+    {
+        ++copies;
+    }
+
+    MovePreferred(MovePreferred&&) noexcept
+    {
+        ++moves;
+    }
+};
+
+struct MoveOnly
+{
+    static inline std::size_t copies{};
+    static inline std::size_t moves{};
+
+    MoveOnly() = default;
+    MoveOnly(const MoveOnly&) = delete;
+
+    MoveOnly(MoveOnly&&)
+    {
+        ++moves;
+    }
+};
 
 int main()
 {
@@ -339,5 +391,84 @@ int main()
     std::cout << (citr == itr) << '\n';
     std::cout << (citr - itr) << '\n';
     std::cout << (itr - citr) << '\n';
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<std::size_t> sizeDist(1, 2000);
+    std::uniform_int_distribution<std::size_t> contentDist(1, 1000);
+
+    auto randomVector = [&](std::size_t size) -> std::vector<int> {
+        std::vector<int> vec(size, 0);
+        for (std::size_t index = 0; index < size; ++index) {
+            vec[index] = contentDist(gen);
+        }
+        return vec;
+    };
+/*
+    for (int trial = 0; trial < 10000; ++trial)
+    {
+        std::size_t initialSize = sizeDist(gen);
+        std::size_t rangeSize = sizeDist(gen);
+        std::vector<int> sv = randomVector(initialSize);
+        Vector<int> mv(sv.begin(), sv.end());
+        assert(sv.size() == mv.size());
+        auto range = randomVector(rangeSize);
+        std::uniform_int_distribution<std::size_t> posDist(0, sv.size());
+
+        auto pos = posDist(gen);
+
+        sv.insert(sv.begin() + pos,
+                  range.begin(),
+                  range.end());
+
+        mv.insert(mv.begin() + pos,
+                  range.begin(),
+                  range.end());
+        assert(sv.size() == mv.size());
+        mv.insert(
+            mv.begin() + pos,
+            mv.begin(),
+            mv.end());
+        sv.insert(
+            sv.begin() + pos,
+            sv.begin(),
+            sv.end());
+        std::vector<int> test1(sv.begin(), sv.end());
+        std::vector<int> test2(mv.begin(), mv.end());
+        assert(test1==test2);
+        assert(
+            std::equal(
+                sv.begin(),
+                sv.end(),
+                mv.begin()));
+    }
+*/
+    Vector<CopyPreferred> vcp;
+    for (int i = 0; i < 100000; ++i)
+    {
+        vcp.push_back(CopyPreferred{});
+    }
+
+    std::cout << "CopyPreferred::copies = " << CopyPreferred::copies << '\n';
+    std::cout << "CopyPreferred::moves = " << CopyPreferred::moves << '\n';
+
+    Vector<MovePreferred> vmp;
+    for (int i = 0; i < 100000; ++i)
+    {
+        vmp.push_back(MovePreferred{});
+    }
+
+    std::cout << "MovePreferred::copies = " << MovePreferred::copies << '\n';
+    std::cout << "MovePreferred::moves = " << MovePreferred::moves << '\n';
+
+    Vector<MoveOnly> vmo;
+    for (int i = 0; i < 100000; ++i)
+    {
+        vmo.push_back(MoveOnly{});
+    }
+
+    std::cout << "MoveOnly::copies = " << MoveOnly::copies << '\n';
+    std::cout << "MoveOnly::moves = " << MoveOnly::moves << '\n';
+
     return 0;
 }
