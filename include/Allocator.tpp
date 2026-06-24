@@ -8,7 +8,7 @@ T* Allocator<T>::allocate(std::size_t count) {
         return nullptr;
     }
 
-    if (count > maxSize()) {
+    if (count > Allocator<T>::max_size()) {
         throw std::bad_array_new_length();
     }
     return static_cast<T*>(::operator new(sizeof(T) * count));
@@ -35,6 +35,6 @@ void Allocator<T>::destroy(T* ptr) noexcept {
 }
 
 template<typename T>
-std::size_t Allocator<T>::maxSize() const noexcept {
+std::size_t Allocator<T>::max_size() const noexcept {
     return std::numeric_limits<std::size_t>::max() / sizeof(T);
 }

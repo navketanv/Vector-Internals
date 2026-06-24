@@ -359,6 +359,9 @@ int main()
     std::cout << "nth element\n";
 
     v = {7,4,9,1,5,3};
+    Vector<int> v2 = v;
+
+    v2 = v;
 
     std::nth_element(v.begin(),
                      v.begin() + 2,

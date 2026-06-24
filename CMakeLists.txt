@@ -12,6 +12,7 @@ add_executable(Vector-Internals src/Vector-Internals.cpp
 
 
     include/IteratorBase.h
+    include/AllocatorPolicy.h
 )
 
 include(GNUInstallDirs)

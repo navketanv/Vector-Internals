@@ -1,9 +1,11 @@
 #pragma once
 #include "Allocator.h"
+#include "AllocatorPolicy.h"
 #include "BufferStorage.h"
 #include "IteratorBase.h"
 #include <initializer_list>
 #include <cstddef>
+#include <memory>
 #include <type_traits>
 #include <iterator>
 
@@ -13,6 +15,8 @@ class Vector
 public:
     using value_type = T;
     using allocator_type = Alloc;
+    using AllocatorTraits = std::allocator_traits<allocator_type>;
+    using AllocPolicy = AllocatorPolicy<allocator_type>;
 
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
@@ -32,6 +36,11 @@ public:
 private:
 static constexpr bool kVectorSwapNoexcept = std::is_nothrow_swappable_v<BufferStorage<T, Alloc>> &&
                                             std::is_nothrow_swappable_v<size_type>;
+    Vector(const Vector<T, Alloc>::allocator_type& alloc, const Vector<T, Alloc>& rhs);
+    Vector(const Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>&& rhs);
+    template<std::forward_iterator ForwardIt>
+    void assignFromRange(const Vector<T, Alloc>::allocator_type& alloc, ForwardIt first, ForwardIt last);
+
 public:
     Vector();
     Vector(Vector<T, Alloc>::size_type size, const T& value);
@@ -75,8 +84,8 @@ public:
     [[nodiscard]] typename Vector<T, Alloc>::pointer data() noexcept;
     [[nodiscard]] typename Vector<T, Alloc>::const_pointer data() const noexcept;
 
-    typename Vector<T, Alloc>::allocator_type& allocator() noexcept;
-    const typename Vector<T, Alloc>::allocator_type& allocator() const noexcept;
+    [[nodiscard]] typename Vector<T, Alloc>::allocator_type get_allocator() noexcept;
+    [[nodiscard]] const typename Vector<T, Alloc>::allocator_type get_allocator() const noexcept;
 
     [[nodiscard]] typename Vector<T, Alloc>::reference operator[](Vector<T, Alloc>::size_type index) noexcept;
     [[nodiscard]] typename Vector<T, Alloc>::const_reference operator[](Vector<T, Alloc>::size_type index) const noexcept;
@@ -133,7 +142,9 @@ private:
     typename Vector<T, Alloc>::iterator reallocateAndInsertRange(Vector<T, Alloc>::size_type insertionIndex, Vector<T, Alloc>::size_type count, ForwardIt first, ForwardIt last);
 
     [[nodiscard]] bool isValidIterator(Vector<T, Alloc>::const_iterator pos) const;
-    [[nodiscard]] typename Vector<T, Alloc>::size_type maxSize() const noexcept;
+    [[nodiscard]] typename Vector<T, Alloc>::allocator_type& allocator() noexcept;
+    [[nodiscard]] const typename Vector<T, Alloc>::allocator_type& allocator() const noexcept;
+    [[nodiscard]] typename Vector<T, Alloc>::size_type max_size() const noexcept;
     [[nodiscard]] typename Vector<T, Alloc>::size_type nextCapacity(Vector<T, Alloc>::size_type required) const ;
     void checkGrowth(Vector<T, Alloc>::size_type count) const;
 private:
