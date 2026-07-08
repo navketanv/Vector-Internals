@@ -36,19 +36,42 @@ public:
 private:
 static constexpr bool kVectorSwapNoexcept = std::is_nothrow_swappable_v<BufferStorage<T, Alloc>> &&
                                             std::is_nothrow_swappable_v<size_type>;
+
+    template<std::forward_iterator ForwardIt>
+    void assignFromRange(Vector<T, Alloc>::allocator_type& alloc, ForwardIt first, ForwardIt last);
+    template<typename... Args>
+    Vector<T, Alloc>::pointer constructOne(Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>::pointer dest, Args&&... args);
+    // Default-constructs count objects beginning at dest.
+    Vector<T, Alloc>::pointer constructDefault(Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>::pointer dest, Vector<T, Alloc>::size_type count);
+    // Copy-constructs count copies of value beginning at dest.
+    Vector<T, Alloc>::pointer constructFill(Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>::pointer dest, Vector<T, Alloc>::size_type count, const T& value);
+    // Copy-constructs elements from the source range [first, last)
+    // into uninitialized storage beginning at dest.
+    // Used when constructing elements from an external source range.
+    // Returns one-past-the-last successfully constructed element.
+    // Destroys any partially constructed elements and rethrows on failure.
+    template<std::input_iterator Iterator>
+    Vector<T, Alloc>::pointer constructCopyRange(Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>::pointer dest, Iterator first, Iterator last);
+    // Move-constructs elements from the source range [first, last)
+    // into uninitialized storage beginning at dest.
+    // Used when relocating existing elements during reallocation.
+    // Returns one-past-the-last successfully constructed element.
+    // Destroys any partially constructed elements and rethrows on failure.
+    template<std::input_iterator Iterator>
+    Vector<T, Alloc>::pointer constructMoveRange(Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>::pointer dest, Iterator first, Iterator last);
+    void destroyRange(Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>::pointer first, Vector<T, Alloc>::pointer last) noexcept;
+
+    // Private allocator-aware-constructors
     Vector(const Vector<T, Alloc>::allocator_type& alloc, const Vector<T, Alloc>& rhs);
     Vector(const Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>&& rhs);
-    template<std::forward_iterator ForwardIt>
-    void assignFromRange(const Vector<T, Alloc>::allocator_type& alloc, ForwardIt first, ForwardIt last);
 
 public:
     Vector();
     Vector(Vector<T, Alloc>::size_type size, const T& value);
     explicit Vector(Vector<T, Alloc>::size_type size);
     Vector(std::initializer_list<T> list);
-    template<typename InputIt>
-        requires(!std::is_integral_v<InputIt>)
-    Vector(InputIt first, InputIt last);
+    template<std::input_iterator Iterator>
+    Vector(Iterator first, Iterator last);
     Vector(const Vector<T, Alloc>& rhs);
     Vector(Vector<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_constructible_v<BufferStorage<T, Alloc>>);
     Vector<T, Alloc>& operator=(const Vector<T, Alloc>& rhs);
@@ -59,9 +82,8 @@ public:
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, const T& value);
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, T&& value);
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, Vector<T, Alloc>::size_type count, const T& value);
-    template<typename InputIt>
-        requires(!std::is_integral_v<InputIt>)
-    typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, InputIt first, InputIt last);
+    template<std::input_iterator Iterator>
+    typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, Iterator first, Iterator last);
     typename Vector<T, Alloc>::iterator insert(Vector<T, Alloc>::const_iterator pos, std::initializer_list<T> ilist);
     typename Vector<T, Alloc>::iterator erase(Vector<T, Alloc>::const_iterator first, Vector<T, Alloc>::const_iterator last);
     typename Vector<T, Alloc>::iterator erase(Vector<T, Alloc>::const_iterator pos);

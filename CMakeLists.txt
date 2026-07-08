@@ -21,4 +21,4 @@ install(TARGETS Vector-Internals
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-target_sources(Vector-Internals PRIVATE include/Allocator.tpp include/BufferStorage.tpp include/Vector.tpp)
+target_sources(Vector-Internals PRIVATE include/AllocatorPolicy.h include/Allocator.tpp include/BufferStorage.tpp include/Vector.tpp)

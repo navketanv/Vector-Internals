@@ -179,6 +179,8 @@ int main()
 
     v.push_back(11);
     v.push_back(43);
+    v.emplace_back(27);
+    v.emplace_back(28);
 
     fl = {2,3,5,6};
 
@@ -407,7 +409,7 @@ int main()
         }
         return vec;
     };
-/*
+
     for (int trial = 0; trial < 10000; ++trial)
     {
         std::size_t initialSize = sizeDist(gen);
@@ -445,7 +447,7 @@ int main()
                 sv.end(),
                 mv.begin()));
     }
-*/
+
     Vector<CopyPreferred> vcp;
     for (int i = 0; i < 100000; ++i)
     {
@@ -473,5 +475,95 @@ int main()
     std::cout << "MoveOnly::copies = " << MoveOnly::copies << '\n';
     std::cout << "MoveOnly::moves = " << MoveOnly::moves << '\n';
 
+    Vector<int> vnew{1,2,3,4};
+    v = vnew;
+    v.insert(v.begin(), 100);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+
+    v = vnew;
+    v.insert(v.begin(), 22, 100);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+
+    v = vnew;
+    v.insert(v.begin() + 2, 7, 100);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+
+    v = vnew;
+    v.insert(v.end(), 100);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+
+    v = vnew;
+    v.insert(v.end(), 17, 100);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+
+    v.clear();
+    v.insert(v.begin(), 42);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+
+    v.clear();
+    v.insert(v.begin(), 7, 42);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+
+    v.clear();
+    v.reserve(1000);
+    v.insert(v.end(), 19);
+    v.insert(v.begin(), 19);
+    v.insert(v.begin() + 1, 4, 19);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+
+    v.insert(v.begin() + 2, 12, 4119);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+
+    v.insert(v.end(), fl.begin(), fl.end());
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+
+    v.insert(v.begin() + 2, fl.begin(), fl.end());
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+
+    v.insert(v.begin() + 2, v.begin(), v.end());
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+
+//    vnew.reserve(1000);
+    vnew = v;
+    for (auto x : vnew) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
     return 0;
 }
