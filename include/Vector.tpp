@@ -77,7 +77,7 @@ Vector<T, Alloc>::constructCopyRange(Vector<T, Alloc>::allocator_type& alloc, Ve
 template<typename T, typename Alloc>
 template<std::input_iterator Iterator>
 Vector<T, Alloc>::pointer
-Vector<T, Alloc>::constructMoveRange(Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>::pointer dest, Iterator first, Iterator last){
+Vector<T, Alloc>::constructMoveRange(Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>::pointer dest, Iterator first, Iterator last) {
     Vector<T, Alloc>::pointer current = dest;
     try {
         while (first != last) {
@@ -94,7 +94,7 @@ Vector<T, Alloc>::constructMoveRange(Vector<T, Alloc>::allocator_type& alloc, Ve
 
 template<typename T, typename Alloc>
 void Vector<T, Alloc>::destroyRange(Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>::pointer first, Vector<T, Alloc>::pointer last) noexcept {
-    while(first != last) {
+    while (first != last) {
         --last;
         Vector<T, Alloc>::AllocatorTraits::destroy(alloc, last);
     }
@@ -193,19 +193,14 @@ Vector<T, Alloc>& Vector<T, Alloc>::operator=(const Vector<T, Alloc>& rhs)
                 data()[index] = rhs.data()[index];
             }
             if (rhs.size() <= m_size) {
-                while (m_size > rhs.size()) {
-                    --m_size;
-                    //allocator().destroy(data() + m_size);
-                    Vector<T, Alloc>::pointer dest = data() + m_size;
-                    destroyRange(allocator(), dest, dest + 1);
-                    //Vector<T, Alloc>::AllocatorTraits::destroy(allocator(), data() + m_size);
-                }
+                size_type eraseCount = m_size - rhs.size();
+                Vector<T, Alloc>::pointer newEnd = data() + m_size - eraseCount;
+                destroyRange(allocator(), newEnd, newEnd + eraseCount);
+                m_size -= eraseCount;
             } else {
                 while (m_size < rhs.size()) {
                     Vector<T, Alloc>::pointer next = constructOne(allocator(), data() + m_size, rhs.data()[m_size]);
                     assert(next == data() + m_size + 1);
-                    //Vector<T, Alloc>::AllocatorTraits::construct(allocator(), data() + m_size, rhs.data()[m_size]);
-                    //allocator().construct(data() + m_size, rhs.data()[m_size]);
                     ++m_size;
                 }
             }
@@ -323,11 +318,9 @@ Vector<T, Alloc>::erase(Vector<T, Alloc>::const_iterator first, Vector<T, Alloc>
         data()[index] = std::move(data()[index + eraseCount]);
     }
 
-    for (size_type index = 0; index < eraseCount; ++index) {
-        --m_size;
-        //allocator().destroy(data() + m_size);
-        Vector<T, Alloc>::AllocatorTraits::destroy(allocator(), data() + m_size);
-    }
+    Vector<T, Alloc>::pointer newEnd = data() + m_size - eraseCount;
+    destroyRange(allocator(), newEnd, newEnd + eraseCount);
+    m_size -= eraseCount;
     return Vector<T, Alloc>::iterator(data() + eraseStartIndex);
 }
 
@@ -344,8 +337,6 @@ void Vector<T, Alloc>::push_back(const T& value) {
     }
     Vector<T, Alloc>::pointer next = constructOne(allocator(), data() + m_size, value);
     assert(next == data() + m_size + 1);
-    //Vector<T, Alloc>::AllocatorTraits::construct(allocator(), data() + m_size, value);
-    //allocator().construct(data() + m_size, value);
     ++m_size;
 }
 
@@ -356,8 +347,6 @@ void Vector<T, Alloc>::push_back(T&& value) {
     }
     Vector<T, Alloc>::pointer next = constructOne(allocator(), data() + m_size, std::move(value));
     assert(next == data() + m_size + 1);
-    //Vector<T, Alloc>::AllocatorTraits::construct(allocator(), data() + m_size, std::move(value));
-    //allocator().construct(data() + m_size, std::move(value));
     ++m_size;
 }
 
@@ -370,8 +359,6 @@ Vector<T, Alloc>::emplace_back(Args&&... args) {
     }
     Vector<T, Alloc>::pointer next = constructOne(allocator(), data() + m_size, std::forward<Args>(args)...);
     assert(next == data() + m_size + 1);
-    //Vector<T, Alloc>::AllocatorTraits::construct(allocator(), data() + m_size, std::forward<Args>(args)...);
-    //allocator().construct(data() + m_size, std::forward<Args>(args)...);
     ++m_size;
     return data()[m_size - 1];
 }
@@ -379,9 +366,8 @@ Vector<T, Alloc>::emplace_back(Args&&... args) {
 template<typename T, typename Alloc>
 void Vector<T, Alloc>::pop_back() {
     if (m_size > 0) {
+        destroyRange(allocator(), data() + m_size - 1, data() + m_size);
         --m_size;
-        //allocator().destroy(data() + m_size);
-        Vector<T, Alloc>::AllocatorTraits::destroy(allocator(), data() + m_size);
     }
 }
 
@@ -399,14 +385,9 @@ void Vector<T, Alloc>::resize(Vector<T, Alloc>::size_type count, const T& value)
         if (count > capacity()) {
             reserve(nextCapacity(count));
         }
-        Vector<T, Alloc>::pointer next = constructFill(allocator(), data(), count - m_size, value);
-        assert(next == data() + (count - m_size));
+        Vector<T, Alloc>::pointer next = constructFill(allocator(), data() + m_size, count - m_size, value);
+        assert(next == data() + count);
         m_size = count;
-/*        while (count > m_size) {
-            Vector<T, Alloc>::AllocatorTraits::construct(allocator(), data() + m_size, value);
-            //allocator().construct(data() + m_size, value);
-            ++m_size;
-        }*/
     }
 }
 
@@ -702,7 +683,6 @@ Vector<T, Alloc>::insertInPlace(Vector<T, Alloc>::size_type insertionIndex, Vect
                 Vector<T, Alloc>::pointer src = data() + (m_size - count) + index;
                 Vector<T, Alloc>::pointer next = Vector<T, Alloc>::constructOne(allocator(), dest, std::move(*src));
                 assert(next == dest + 1);
-                //allocator().construct(data() + m_size + index, std::move(data()[m_size - count + index]));
             }
             for (size_type index = m_size - count; index > insertionIndex; --index) {
                 data()[index + count - 1] = std::move(data()[index - 1]);
@@ -714,14 +694,11 @@ Vector<T, Alloc>::insertInPlace(Vector<T, Alloc>::size_type insertionIndex, Vect
             const size_type overflow = count - suffixSize;
             Vector<T, Alloc>::pointer next = constructFill(allocator(), data() + m_size, overflow, value);
             assert(next == data() + m_size + overflow);
-            //allocator().construct(data() + m_size + index, value);
             for (size_type index = overflow; index < count; ++index) {
                 Vector<T, Alloc>::pointer dest = data() + m_size + index;
                 Vector<T, Alloc>::pointer src = data() + m_size - count + index;
                 Vector<T, Alloc>::pointer next = constructOne(allocator(), dest, std::move(*src));
                 assert(next == dest + 1);
-                // Vector<T, Alloc>::AllocatorTraits::construct(allocator(), data() + m_size + index, std::move(data()[m_size + index - count]));
-                //allocator().construct(data() + m_size + index, std::move(data()[m_size + index - count]));
             }
             for (size_type index = insertionIndex; index < m_size; ++index) {
                 data()[index] = value;
@@ -741,10 +718,6 @@ Vector<T, Alloc>::insertRangeInPlace(Vector<T, Alloc>::size_type insertionIndex,
         temp.push_back(*it);
     }
     if (insertionIndex == m_size) {
-/*        for (size_type index = 0; index < count; ++index) {
-            Vector<T, Alloc>::AllocatorTraits::construct(allocator(), data() + m_size + index, std::move(temp[index]));
-            //allocator().construct(data() + m_size + index, std::move(temp[index]));
-        }*/
         Vector<T, Alloc>::pointer dest = data() + insertionIndex;
         Vector<T, Alloc>::pointer next = constructCopyRange(allocator(), dest, first, last);
         assert(next == dest + count);
@@ -756,8 +729,6 @@ Vector<T, Alloc>::insertRangeInPlace(Vector<T, Alloc>::size_type insertionIndex,
                 Vector<T, Alloc>::pointer src = data() + (m_size - count) + index;
                 Vector<T, Alloc>::pointer next = constructOne(allocator(), dest, std::move(*src));
                 assert(next == dest + 1);
-                //Vector<T, Alloc>::AllocatorTraits::construct(allocator(), data() + m_size + index, std::move(data()[m_size + index - count]));
-                //allocator().construct(data() + m_size + index, std::move(data()[m_size + index - count]));
             }
             for (size_type index = m_size - count; index > insertionIndex; --index) {
                 data()[index + count - 1] = std::move(data()[index - 1]);
@@ -772,8 +743,6 @@ Vector<T, Alloc>::insertRangeInPlace(Vector<T, Alloc>::size_type insertionIndex,
                 Vector<T, Alloc>::pointer src = data() + insertionIndex + suffixIndex;
                 Vector<T, Alloc>::pointer next = constructOne(allocator(), dest, std::move(*src));
                 assert(next == dest + 1);
-                //Vector<T, Alloc>::AllocatorTraits::construct(allocator(), data() + m_size + overflow + suffixIndex, std::move(data()[insertionIndex + suffixIndex]));
-                //allocator().construct(data() + m_size + overflow + suffixIndex, std::move(data()[insertionIndex + suffixIndex]));
             }
             size_type tempIndex{};
             for (size_type index = insertionIndex; index < m_size && tempIndex < count; ++index, ++tempIndex) {
@@ -783,8 +752,6 @@ Vector<T, Alloc>::insertRangeInPlace(Vector<T, Alloc>::size_type insertionIndex,
                 Vector<T, Alloc>::pointer dest = data() + m_size + index;
                 Vector<T, Alloc>::pointer next = constructOne(allocator(), dest, std::move(temp[tempIndex]));
                 assert(next == dest + 1);
-                //Vector<T, Alloc>::AllocatorTraits::construct(allocator(), data() + m_size + index, std::move(temp[tempIndex]));
-                //allocator().construct(data() + m_size + index, std::move(temp[tempIndex]));
             }
         }
     }

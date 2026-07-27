@@ -524,6 +524,13 @@ int main()
         std::cout << x << ' ';
     }
     std::cout << '\n';
+    std::cout << "resize check start \n";
+    v.resize(10, 91);
+    for (auto x : v) {
+        std::cout << x << ' ';
+    }
+    std::cout << '\n';
+    std::cout << "resize check end \n";
 
     v.clear();
     v.reserve(1000);
