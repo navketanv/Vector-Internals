@@ -1,10 +1,6 @@
 #pragma once
 #include "Allocator.h"
 #include "AllocatorPolicy.h"
-#include <cstddef>
-#include <memory>
-#include <type_traits>
-#include <utility>
 
 template<typename T, typename Alloc = Allocator<T>>
 class BufferStorage
@@ -12,8 +8,8 @@ class BufferStorage
 public:
     using value_type = T;
     using allocator_type = Alloc;
-    using AllocatorTraits = std::allocator_traits<allocator_type>;
-    using AllocPolicy = AllocatorPolicy<allocator_type>;
+    using AllocatorTraits = std::allocator_traits<Alloc>;
+    using AllocPolicy = AllocatorPolicy<Alloc>;
     using size_type = std::size_t;
     using pointer = T*;
     using const_pointer = const T*;
@@ -25,7 +21,7 @@ private:
 public:
     BufferStorage() = default;
     explicit BufferStorage(BufferStorage<T, Alloc>::size_type capacity);
-    explicit BufferStorage(const BufferStorage<T, Alloc>::allocator_type& alloc, BufferStorage<T, Alloc>::size_type capacity);
+    explicit BufferStorage(const BufferStorage<T, Alloc>::allocator_type& allocator, BufferStorage<T, Alloc>::size_type capacity);
 
     BufferStorage(const BufferStorage<T, Alloc>& rhs) = delete;
     BufferStorage<T, Alloc>& operator=(const BufferStorage<T, Alloc>& rhs) = delete;
@@ -33,13 +29,13 @@ public:
     BufferStorage(BufferStorage<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_constructible_v<Alloc>);
     BufferStorage<T, Alloc>& operator=(BufferStorage<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_assignable_v<Alloc>);
 
-    ~BufferStorage();
+    ~BufferStorage() noexcept;
 
     void swap(BufferStorage<T, Alloc>& rhs) noexcept(kStorageSwapNoexcept);
     // Preconditions:
     // - The current storage has already been released.
     // - The caller guarantees that adopting rhs's storage is allocator-safe.
-    void stealStorage(BufferStorage& rhs) noexcept;
+    void stealStorage(BufferStorage<T, Alloc>& rhs) noexcept;
 
     [[nodiscard]] typename BufferStorage<T, Alloc>::pointer data() noexcept;
     [[nodiscard]] typename BufferStorage<T, Alloc>::const_pointer data() const noexcept;
@@ -74,8 +70,8 @@ BufferStorage<T, Alloc>::BufferStorage(BufferStorage<T, Alloc>::size_type capaci
     , m_capacity(capacity) {}
 
 template<typename T, typename Alloc>
-BufferStorage<T, Alloc>::BufferStorage(const BufferStorage<T, Alloc>::allocator_type& alloc, BufferStorage<T, Alloc>::size_type capacity)
-    : m_allocator(alloc)
+BufferStorage<T, Alloc>::BufferStorage(const BufferStorage<T, Alloc>::allocator_type& allocator, BufferStorage<T, Alloc>::size_type capacity)
+    : m_allocator(allocator)
     , m_pData(capacity ? BufferStorage<T, Alloc>::AllocatorTraits::allocate(m_allocator, capacity) : nullptr)
     , m_capacity(capacity) {}
 
@@ -97,7 +93,7 @@ BufferStorage<T, Alloc>& BufferStorage<T, Alloc>::operator=(BufferStorage<T, All
 }
 
 template<typename T, typename Alloc>
-BufferStorage<T, Alloc>::~BufferStorage() {
+BufferStorage<T, Alloc>::~BufferStorage() noexcept {
     releaseStorage();
 }
 
@@ -148,7 +144,7 @@ BufferStorage<T, Alloc>::capacity() const noexcept {
 
 template<typename T, typename Alloc>
 bool BufferStorage<T, Alloc>::hasStorage() const noexcept {
-    return m_pData != nullptr;
+    return (m_pData != nullptr);
 }
 
 template<typename T, typename Alloc>
