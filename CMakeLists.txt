@@ -6,11 +6,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(Vector-Internals src/Vector-Internals.cpp
-    include/Vector.h
     include/Allocator.h
     include/AllocatorPolicy.h
+    include/AllocationStats.h
     include/BufferStorage.h
     include/IteratorBase.h
+    include/StatefulAllocator.h
+    include/Vector.h
 
     include/Vector.tpp
 )

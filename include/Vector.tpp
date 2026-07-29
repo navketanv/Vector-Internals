@@ -182,7 +182,7 @@ template<typename T, typename Alloc>
 Vector<T, Alloc>& Vector<T, Alloc>::operator=(const Vector<T, Alloc>& rhs)
 {
     if (this != &rhs) {
-        if constexpr (Vector<T, Alloc>::AllocPolicy::copy_assign_propagates) {
+        if constexpr (Vector<T, Alloc>::AllocPolicy::kCopyAssignPropagates) {
             Vector<T, Alloc> temp(rhs.allocator(), rhs);
             swap(temp);
             return *this;
@@ -215,7 +215,7 @@ Vector<T, Alloc>& Vector<T, Alloc>::operator=(const Vector<T, Alloc>& rhs)
 template<typename T, typename Alloc>
 Vector<T, Alloc>& Vector<T, Alloc>::operator=(Vector<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_assignable_v<BufferStorage<T, Alloc>>) {
     if (this != &rhs) {
-        if constexpr (Vector<T, Alloc>::AllocPolicy::move_assign_propagates) {
+        if constexpr (Vector<T, Alloc>::AllocPolicy::kMoveAssignPropagates) {
             clear();
             m_storage = std::move(rhs.m_storage);
             m_size = std::exchange(rhs.m_size, 0);
