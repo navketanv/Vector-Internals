@@ -636,7 +636,7 @@ void Vector<T, Alloc>::reallocateStorage(Vector<T, Alloc>::size_type newCapacity
         throw std::length_error("reallocateStorage() capacity is smaller than m_size");
     }
 
-    BufferStorage<T, Alloc> newStorage(newCapacity);
+    BufferStorage<T, Alloc> newStorage(allocator(), newCapacity);
     Vector<T, Alloc>::pointer next = constructMoveRange(newStorage.allocator(), newStorage.data(), begin(), end());
     assert(next == newStorage.data() + m_size);
     const size_type oldSize = m_size;
@@ -763,7 +763,7 @@ template<typename T, typename Alloc>
 template<typename... Args>
 typename Vector<T, Alloc>::iterator
 Vector<T, Alloc>::reallocateAndInsert(Vector<T, Alloc>::size_type insertionIndex, Args&&... args) {
-    BufferStorage<T, Alloc> newStorage(nextCapacity(m_size + 1));
+    BufferStorage<T, Alloc> newStorage(allocator(), nextCapacity(m_size + 1));
 
     Vector<T, Alloc>::iterator insertPos = begin() + insertionIndex;
     Vector<T, Alloc>::pointer next = constructMoveRange(newStorage.allocator(), newStorage.data(), begin(), insertPos);
@@ -785,7 +785,7 @@ Vector<T, Alloc>::reallocateAndInsert(Vector<T, Alloc>::size_type insertionIndex
 template<typename T, typename Alloc>
 typename Vector<T, Alloc>::iterator
 Vector<T, Alloc>::reallocateAndInsert(Vector<T, Alloc>::size_type insertionIndex, Vector<T, Alloc>::size_type count, const T& value) {
-    BufferStorage<T, Alloc> newStorage(nextCapacity(m_size + count));
+    BufferStorage<T, Alloc> newStorage(allocator(), nextCapacity(m_size + count));
 
     Vector<T, Alloc>::iterator insertPos = begin() + insertionIndex;
     Vector<T, Alloc>::pointer next = constructMoveRange(newStorage.allocator(), newStorage.data(), begin(), insertPos);
@@ -808,7 +808,7 @@ template<typename T, typename Alloc>
 template<typename ForwardIt>
 typename Vector<T, Alloc>::iterator
 Vector<T, Alloc>::reallocateAndInsertRange(Vector<T, Alloc>::size_type insertionIndex, Vector<T, Alloc>::size_type count, ForwardIt first, ForwardIt last) {
-    BufferStorage<T, Alloc> newStorage(nextCapacity(m_size + count));
+    BufferStorage<T, Alloc> newStorage(allocator(), nextCapacity(m_size + count));
 
     Vector<T, Alloc>::iterator insertPos = begin() + insertionIndex;
     Vector<T, Alloc>::pointer next = constructMoveRange(newStorage.allocator(), newStorage.data(), begin(), insertPos);
