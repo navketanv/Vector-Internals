@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../include/Vector.h"
+#include "../include/Containers/Vector.h"
 #include <forward_list>
 #include <list>
 #include <sstream>
@@ -283,9 +283,9 @@ void testAlgorithm() {
 
 
     v = {1, 2, 3, 4, 5};
-    assert(std::distance(v.begin(), v.end()) == v.size());
-    assert(std::distance(v.cbegin(), v.cend()) == v.size());
-    assert(std::distance(v.crbegin(), v.crend()) == v.size());
+    assert(static_cast<std::size_t>(std::distance(v.begin(), v.end())) == v.size());
+    assert(static_cast<std::size_t>(std::distance(v.cbegin(), v.cend())) == v.size());
+    assert(static_cast<std::size_t>(std::distance(v.crbegin(), v.crend())) == v.size());
 
     auto adv = v.begin();
     std::advance(adv, 3);
@@ -294,7 +294,7 @@ void testAlgorithm() {
     auto fit = std::find(v.begin(), v.end(), 4);
 
     if (fit != v.end()) {
-        std::size_t index = std::distance(v.begin(), fit);
+        const std::size_t index = static_cast<std::size_t>(std::distance(v.begin(), fit));
         assert((*fit) == v[index]);
     } else {
         assert(fit == v.end());
@@ -434,7 +434,7 @@ void loadTest() {
     auto randomVector = [&](std::size_t size) -> std::vector<int> {
         std::vector<int> vec(size, 0);
         for (std::size_t index = 0; index < size; ++index) {
-            vec[index] = contentDist(gen);
+            vec[index] = static_cast<int>(contentDist(gen));
         }
         return vec;
     };
@@ -451,20 +451,20 @@ void loadTest() {
 
         auto pos = posDist(gen);
 
-        sv.insert(sv.begin() + pos,
+        sv.insert(sv.begin() + static_cast<Vector<int>::difference_type>(pos),
                   range.begin(),
                   range.end());
 
-        mv.insert(mv.begin() + pos,
+        mv.insert(mv.begin() + static_cast<Vector<int>::difference_type>(pos),
                   range.begin(),
                   range.end());
         assert(sv.size() == mv.size());
         mv.insert(
-            mv.begin() + pos,
+            mv.begin() + static_cast<Vector<int>::difference_type>(pos),
             mv.begin(),
             mv.end());
         sv.insert(
-            sv.begin() + pos,
+            sv.begin() + static_cast<Vector<int>::difference_type>(pos),
             sv.begin(),
             sv.end());
         std::vector<int> test1(sv.begin(), sv.end());

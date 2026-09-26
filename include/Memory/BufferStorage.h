@@ -1,6 +1,7 @@
 #pragma once
-#include "Allocator.h"
-#include "AllocatorPolicy.h"
+#include "Memory/Allocator.h"
+#include "Memory/AllocatorPolicy.h"
+#include "Memory/AllocatorFactory.h"
 
 template<typename T, typename Alloc = Allocator<T>>
 class BufferStorage
@@ -65,7 +66,7 @@ void swap(BufferStorage<T, Alloc>& lhs,
 
 template<typename T, typename Alloc>
 BufferStorage<T, Alloc>::BufferStorage(BufferStorage<T, Alloc>::size_type capacity)
-    : m_allocator{}
+    : m_allocator(AllocatorFactory<Alloc>::create())
     , m_pData(capacity ? BufferStorage<T, Alloc>::AllocatorTraits::allocate(m_allocator, capacity) : nullptr)
     , m_capacity(capacity) {}
 

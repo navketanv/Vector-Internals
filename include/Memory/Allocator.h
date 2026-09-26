@@ -9,8 +9,7 @@ template<typename T>
 class Allocator;
 
 template<typename T, typename U>
-constexpr bool operator==(const Allocator<T>& lhs,
-                          const Allocator<U>& rhs) noexcept
+constexpr bool operator==(const Allocator<T>&, const Allocator<U>&) noexcept
 {
     return true;
 }
@@ -47,7 +46,7 @@ public:
     ~Allocator() noexcept = default;
 
     template<typename U>
-    constexpr Allocator(const Allocator<U>& rhs) noexcept {}
+    constexpr Allocator(const Allocator<U>&) noexcept {}
 
     [[nodiscard]] constexpr T* allocate(std::size_t count) const;
     constexpr void deallocate(T* ptr, std::size_t count) const noexcept;

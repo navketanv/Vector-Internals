@@ -697,7 +697,7 @@ Vector<T, Alloc>::insertInPlace(Vector<T, Alloc>::size_type insertionIndex, Vect
             for (size_type index = overflow; index < count; ++index) {
                 Vector<T, Alloc>::pointer dest = data() + m_size + index;
                 Vector<T, Alloc>::pointer src = data() + m_size - count + index;
-                Vector<T, Alloc>::pointer next = constructOne(allocator(), dest, std::move(*src));
+                next = constructOne(allocator(), dest, std::move(*src));
                 assert(next == dest + 1);
             }
             for (size_type index = insertionIndex; index < m_size; ++index) {
@@ -765,7 +765,7 @@ typename Vector<T, Alloc>::iterator
 Vector<T, Alloc>::reallocateAndInsert(Vector<T, Alloc>::size_type insertionIndex, Args&&... args) {
     BufferStorage<T, Alloc> newStorage(allocator(), nextCapacity(m_size + 1));
 
-    Vector<T, Alloc>::iterator insertPos = begin() + insertionIndex;
+    Vector<T, Alloc>::iterator insertPos = begin() + static_cast<difference_type>(insertionIndex);
     Vector<T, Alloc>::pointer next = constructMoveRange(newStorage.allocator(), newStorage.data(), begin(), insertPos);
     assert(next == newStorage.data() + insertionIndex);
 
@@ -787,7 +787,7 @@ typename Vector<T, Alloc>::iterator
 Vector<T, Alloc>::reallocateAndInsert(Vector<T, Alloc>::size_type insertionIndex, Vector<T, Alloc>::size_type count, const T& value) {
     BufferStorage<T, Alloc> newStorage(allocator(), nextCapacity(m_size + count));
 
-    Vector<T, Alloc>::iterator insertPos = begin() + insertionIndex;
+    Vector<T, Alloc>::iterator insertPos = begin() + static_cast<difference_type>(insertionIndex);
     Vector<T, Alloc>::pointer next = constructMoveRange(newStorage.allocator(), newStorage.data(), begin(), insertPos);
     assert(next == newStorage.data() + insertionIndex);
 
@@ -810,7 +810,7 @@ typename Vector<T, Alloc>::iterator
 Vector<T, Alloc>::reallocateAndInsertRange(Vector<T, Alloc>::size_type insertionIndex, Vector<T, Alloc>::size_type count, ForwardIt first, ForwardIt last) {
     BufferStorage<T, Alloc> newStorage(allocator(), nextCapacity(m_size + count));
 
-    Vector<T, Alloc>::iterator insertPos = begin() + insertionIndex;
+    Vector<T, Alloc>::iterator insertPos = begin() + static_cast<difference_type>(insertionIndex);
     Vector<T, Alloc>::pointer next = constructMoveRange(newStorage.allocator(), newStorage.data(), begin(), insertPos);
     assert(next == newStorage.data() + insertionIndex);
 

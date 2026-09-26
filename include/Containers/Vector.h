@@ -1,8 +1,8 @@
 #pragma once
-#include "Allocator.h"
-#include "AllocatorPolicy.h"
-#include "BufferStorage.h"
-#include "IteratorBase.h"
+#include "Memory/Allocator.h"
+#include "Memory/AllocatorPolicy.h"
+#include "Memory/BufferStorage.h"
+#include "Iterator/IteratorBase.h"
 #include <initializer_list>
 #include <cstddef>
 #include <memory>
