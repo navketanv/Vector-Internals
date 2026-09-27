@@ -1,9 +1,17 @@
 #include <gtest/gtest.h>
 #include <utility>
+#include <memory>
+
 #include "Memory/Allocator.h"
 #include "Memory/StatefulAllocator.h"
 #include "Memory/BufferStorage.h"
 #include "Memory/TrackingAllocator.h"
+#include "Memory/AllocationRegistry.h"
+#include "Memory/AllocationStats.h"
+
+// BufferStorageTests.cpp
+using TrackingIntAllocator = TrackingAllocator<int>;
+using BufferStorageIntTracking = BufferStorage<int, TrackingIntAllocator>;
 
 TEST(BufferStorageTests, ZeroCapacityConstruction)
 {
@@ -116,4 +124,28 @@ TEST(BufferStorageTests, FactoryConstructsTrackingAllocator)
     EXPECT_EQ(storage.capacity(), 10);
     EXPECT_NE(storage.data(), nullptr);
     EXPECT_TRUE(storage.hasStorage());
+}
+
+TEST(BufferStorageTests, TrackingAllocatorTracksAllocationDeallocation)
+{
+    std::shared_ptr<AllocationRegistry> pRegistry = std::make_shared<AllocationRegistry>();
+    EXPECT_NE(pRegistry, nullptr);
+    TrackingIntAllocator allocator(12, pRegistry);
+    const AllocationStats& stats = pRegistry->statsFor(allocator.id());
+    {
+        BufferStorageIntTracking storage(allocator, 128);
+
+        EXPECT_EQ(storage.allocator().id(), 12);
+        EXPECT_EQ(storage.capacity(), 128);
+        EXPECT_NE(storage.data(), nullptr);
+        EXPECT_TRUE(storage.hasStorage());
+        EXPECT_EQ(stats.allocations, 1);
+        EXPECT_EQ(stats.deallocations, 0);
+        EXPECT_EQ(stats.constructions, 0);
+        EXPECT_EQ(stats.destructions, 0);
+    }
+    EXPECT_EQ(stats.allocations, 1);
+    EXPECT_EQ(stats.deallocations, 1);
+    EXPECT_EQ(stats.constructions, 0);
+    EXPECT_EQ(stats.destructions, 0);
 }
