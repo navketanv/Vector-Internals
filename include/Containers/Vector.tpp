@@ -3,6 +3,8 @@
 #include <utility>
 #include <cstdint>
 #include <cassert>
+#include "Containers/Vector.h"
+#include "Memory/AllocatorFactory.h"
 
 template<typename T, typename Alloc>
 template<std::forward_iterator ForwardIt>
@@ -101,14 +103,6 @@ void Vector<T, Alloc>::destroyRange(Vector<T, Alloc>::allocator_type& alloc, Vec
 }
 
 template<typename T, typename Alloc>
-Vector<T, Alloc>::Vector(const Vector<T, Alloc>::allocator_type& alloc, const Vector<T, Alloc>& rhs)
-    : m_storage(alloc, 0)
-    , m_size{}
-{
-    assignFromRange(m_storage.allocator(), rhs.begin(), rhs.end());
-}
-
-template<typename T, typename Alloc>
 Vector<T, Alloc>::Vector(const Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>&& rhs)
     : m_storage(alloc, 0)
     , m_size{}
@@ -123,13 +117,13 @@ Vector<T, Alloc>::Vector(const Vector<T, Alloc>::allocator_type& alloc, Vector<T
 }
 
 template<typename T, typename Alloc>
-Vector<T, Alloc>::Vector()
-    : m_storage{}
+Vector<T, Alloc>::Vector(const Vector<T, Alloc>::allocator_type& alloc)
+    : m_storage(alloc, 0)
     , m_size{} {}
 
 template<typename T, typename Alloc>
-Vector<T, Alloc>::Vector(Vector<T, Alloc>::size_type size, const T& value)
-    : m_storage(size)
+Vector<T, Alloc>::Vector(Vector<T, Alloc>::size_type size, const T& value, const Vector<T, Alloc>::allocator_type& alloc)
+    : m_storage(alloc, size)
     , m_size{}
 {
     Vector<T, Alloc>::pointer next = constructFill(m_storage.allocator(), m_storage.data(), size, value);
@@ -138,8 +132,8 @@ Vector<T, Alloc>::Vector(Vector<T, Alloc>::size_type size, const T& value)
 }
 
 template<typename T, typename Alloc>
-Vector<T, Alloc>::Vector(Vector<T, Alloc>::size_type size)
-    : m_storage(size)
+Vector<T, Alloc>::Vector(Vector<T, Alloc>::size_type size, const Vector<T, Alloc>::allocator_type& alloc)
+    : m_storage(alloc, size)
     , m_size{}
 {
     Vector<T, Alloc>::pointer next = constructDefault(m_storage.allocator(), m_storage.data(), size);
@@ -148,8 +142,8 @@ Vector<T, Alloc>::Vector(Vector<T, Alloc>::size_type size)
 }
 
 template<typename T, typename Alloc>
-Vector<T, Alloc>::Vector(std::initializer_list<T> list)
-    : m_storage(list.size())
+Vector<T, Alloc>::Vector(std::initializer_list<T> list, const Vector<T, Alloc>::allocator_type& alloc)
+    : m_storage(alloc, list.size())
     , m_size{}
 {
     Vector<T, Alloc>::pointer next = constructCopyRange(m_storage.allocator(), m_storage.data(), list.begin(), list.end());
@@ -159,8 +153,8 @@ Vector<T, Alloc>::Vector(std::initializer_list<T> list)
 
 template<typename T, typename Alloc>
 template<std::input_iterator Iterator>
-Vector<T, Alloc>::Vector(Iterator first, Iterator last)
-    : m_storage{}
+Vector<T, Alloc>::Vector(Iterator first, Iterator last, const Vector<T, Alloc>::allocator_type& alloc)
+    : m_storage(alloc, 0)
     , m_size{}
 {
     insert(end(), first, last);
@@ -170,8 +164,16 @@ Vector<T, Alloc>::Vector(Iterator first, Iterator last)
 
 template<typename T, typename Alloc>
 Vector<T, Alloc>::Vector(const Vector<T, Alloc>& rhs)
-    : Vector<T, Alloc>(Vector<T, Alloc>::AllocPolicy::select_copy_constructor_allocator(rhs.allocator()), rhs)
+    : Vector<T, Alloc>(rhs, Vector<T, Alloc>::AllocPolicy::select_copy_constructor_allocator(rhs.allocator()))
 {}
+
+template<typename T, typename Alloc>
+Vector<T, Alloc>::Vector(const Vector<T, Alloc>& rhs, const Vector<T, Alloc>::allocator_type& alloc)
+    : m_storage(alloc, 0)
+    , m_size{}
+{
+    assignFromRange(m_storage.allocator(), rhs.begin(), rhs.end());
+}
 
 template<typename T, typename Alloc>
 Vector<T, Alloc>::Vector(Vector<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_constructible_v<BufferStorage<T, Alloc>>)
