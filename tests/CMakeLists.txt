@@ -12,6 +12,7 @@ FetchContent_MakeAvailable(googletest)
 # ==========================================================
 add_executable(VectorInternalsTests
     BufferStorageTests.cpp
+    VectorTests.cpp
 )
 
 target_include_directories(VectorInternalsTests
