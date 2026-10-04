@@ -61,9 +61,6 @@ static constexpr bool kVectorSwapNoexcept = std::is_nothrow_swappable_v<BufferSt
     Vector<T, Alloc>::pointer constructMoveRange(Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>::pointer dest, Iterator first, Iterator last);
     void destroyRange(Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>::pointer first, Vector<T, Alloc>::pointer last) noexcept;
 
-    // Private allocator-aware-constructors
-    Vector(const Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>&& rhs);
-
 public:
     Vector(const Vector<T, Alloc>::allocator_type& alloc = AllocatorFactory<Alloc>::create());
     Vector(Vector<T, Alloc>::size_type size, const T& value, const Vector<T, Alloc>::allocator_type& alloc = AllocatorFactory<Alloc>::create());
@@ -74,6 +71,7 @@ public:
     Vector(const Vector<T, Alloc>& rhs);
     Vector(const Vector<T, Alloc>& rhs, const Vector<T, Alloc>::allocator_type& alloc);
     Vector(Vector<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_constructible_v<BufferStorage<T, Alloc>>);
+    Vector(Vector<T, Alloc>&& rhs, const Vector<T, Alloc>::allocator_type& alloc);
     Vector<T, Alloc>& operator=(const Vector<T, Alloc>& rhs);
     Vector<T, Alloc>& operator=(Vector<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_assignable_v<BufferStorage<T, Alloc>>);
     ~Vector() noexcept;

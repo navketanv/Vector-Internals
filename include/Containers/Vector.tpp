@@ -3,7 +3,6 @@
 #include <utility>
 #include <cstdint>
 #include <cassert>
-#include "Containers/Vector.h"
 #include "Memory/AllocatorFactory.h"
 
 template<typename T, typename Alloc>
@@ -103,20 +102,6 @@ void Vector<T, Alloc>::destroyRange(Vector<T, Alloc>::allocator_type& alloc, Vec
 }
 
 template<typename T, typename Alloc>
-Vector<T, Alloc>::Vector(const Vector<T, Alloc>::allocator_type& alloc, Vector<T, Alloc>&& rhs)
-    : m_storage(alloc, 0)
-    , m_size{}
-{
-    if (Vector<T, Alloc>::AllocPolicy::allocators_compatible(alloc, rhs.allocator())) {
-        m_storage.stealStorage(rhs.m_storage);
-        m_size = std::exchange(rhs.m_size, 0);
-    } else {
-        assignFromRange(m_storage.allocator(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
-        rhs.clear();
-    }
-}
-
-template<typename T, typename Alloc>
 Vector<T, Alloc>::Vector(const Vector<T, Alloc>::allocator_type& alloc)
     : m_storage(alloc, 0)
     , m_size{} {}
@@ -181,6 +166,23 @@ Vector<T, Alloc>::Vector(Vector<T, Alloc>&& rhs) noexcept(std::is_nothrow_move_c
     , m_size(std::exchange(rhs.m_size, 0)) {}
 
 template<typename T, typename Alloc>
+Vector<T, Alloc>::Vector(Vector<T, Alloc>&& rhs, const Vector<T, Alloc>::allocator_type& alloc)
+    : m_storage(alloc, 0)
+    , m_size{}
+{
+    if (Vector<T, Alloc>::AllocPolicy::allocators_compatible(alloc, rhs.allocator())) {
+        m_storage.stealStorage(rhs.m_storage);
+        m_size = std::exchange(rhs.m_size, 0);
+    } else {
+        assignFromRange(m_storage.allocator(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
+        rhs.clear();
+        if (rhs.empty() && rhs.m_storage.hasStorage()) {
+            rhs.m_storage.releaseStorage();
+        }
+    }
+}
+
+template<typename T, typename Alloc>
 Vector<T, Alloc>& Vector<T, Alloc>::operator=(const Vector<T, Alloc>& rhs)
 {
     if (this != &rhs) {
@@ -222,7 +224,7 @@ Vector<T, Alloc>& Vector<T, Alloc>::operator=(Vector<T, Alloc>&& rhs) noexcept(s
             m_storage = std::move(rhs.m_storage);
             m_size = std::exchange(rhs.m_size, 0);
         } else {
-            Vector<T, Alloc> temp(allocator(), std::move(rhs));
+            Vector<T, Alloc> temp(std::move(rhs), allocator());
             swap(temp);
         }
     }

@@ -37,6 +37,7 @@ public:
     // - The current storage has already been released.
     // - The caller guarantees that adopting rhs's storage is allocator-safe.
     void stealStorage(BufferStorage<T, Alloc>& rhs) noexcept;
+    void releaseStorage() noexcept;
 
     [[nodiscard]] typename BufferStorage<T, Alloc>::pointer data() noexcept;
     [[nodiscard]] typename BufferStorage<T, Alloc>::const_pointer data() const noexcept;
@@ -46,9 +47,6 @@ public:
 
     [[nodiscard]] typename BufferStorage<T, Alloc>::size_type capacity() const noexcept;
     [[nodiscard]] bool hasStorage() const noexcept;
-
-private:
-    void releaseStorage() noexcept;
 
 private:
     Alloc m_allocator{};
@@ -114,6 +112,15 @@ void BufferStorage<T, Alloc>::stealStorage(BufferStorage<T, Alloc>& rhs) noexcep
 }
 
 template<typename T, typename Alloc>
+void BufferStorage<T, Alloc>::releaseStorage() noexcept {
+    if (m_pData != nullptr) {
+        BufferStorage<T, Alloc>::AllocatorTraits::deallocate(m_allocator, m_pData, m_capacity);
+        m_pData = nullptr;
+        m_capacity = 0;
+    }
+}
+
+template<typename T, typename Alloc>
 typename BufferStorage<T, Alloc>::pointer
 BufferStorage<T, Alloc>::data() noexcept {
     return m_pData;
@@ -146,13 +153,4 @@ BufferStorage<T, Alloc>::capacity() const noexcept {
 template<typename T, typename Alloc>
 bool BufferStorage<T, Alloc>::hasStorage() const noexcept {
     return (m_pData != nullptr);
-}
-
-template<typename T, typename Alloc>
-void BufferStorage<T, Alloc>::releaseStorage() noexcept {
-    if (m_pData != nullptr) {
-        BufferStorage<T, Alloc>::AllocatorTraits::deallocate(m_allocator, m_pData, m_capacity);
-        m_pData = nullptr;
-        m_capacity = 0;
-    }
 }
