@@ -46,6 +46,8 @@ add_executable(Vector-Internals
     include/Containers/Vector.tpp
 
     src/Vector-Internals.cpp
+    include/Memory/PoolAllocator.h
+    include/Memory/PoolResource.h
 )
 
 target_include_directories(Vector-Internals
